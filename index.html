@@ -12,6 +12,9 @@
 
 <!-- App css side -->
 <style type="text/css">
+header {
+	margin-bottom: 1em;
+}
 
 .Connection {
 	font-size: 1.25em;
@@ -35,12 +38,16 @@
 	display: block;
 	line-height: 1.5em;
 	padding: 0.25em;
-	margin-top: -0.75em;
+	margin-top: -1em;
 	/*border: 1px solid red;*/
 }
 
 .Actions a {
 	cursor: pointer;
+}
+
+.breadcrumbs {
+	font-size: 1.2em;
 }
 </style>
 
@@ -83,9 +90,9 @@
 		</ul>
 		<a class="add-button" @click="addConnection()" @submit="alert('sub')">
 			<i class="fa fa-plus"></i>
-			Add connection
+			<span class="hidden-lg">Add connection</span>
 		</a>
-		<dialogue v-if="focusedConnection" @submit="submitConnection()" @cancel="focusedConnection=false">
+		<dialogue v-if="focusedConnection" @submit="submitConnection()" @cancel="unfocusConnection()">
 		    <h3 slot="header">Connection</h3>
 		    <form slot="body">
 		      <div class="form-group row">
@@ -113,33 +120,51 @@
 	</header>
 
 	<main class="container-fluid">
-		<h3>Content</h3>
+		<ul class="breadcrumbs list-inline" v-if="breadcrumbs.length > 1">
+			<li v-for="(crumb, index) in breadcrumbs">
+				&gt;&nbsp;
+				<span v-if="index < breadcrumbs.length-1">
+					<a>{{crumb}}</a>
+				</span>
+				<b v-else>{{crumb}}</b>
+			</li>
+		</ul>
+
+		<h3>{{breadcrumbs[breadcrumbs.length-1]}}</h3>
+
+		<ul class="items list-unstyled">
+			<li v-for="item in items">
+				{{item.name}}
+			</li>
+		</ul>
 	</main>
 </div>
 
 <!-- component: dialogue -->
 <template type="text/x-template" id="dialogue-template">
   <transition name="dialogue">
-    <div class="dialogue-mask">
-      <div class="dialogue-wrapper">
-        <div class="dialogue-container">
-          <div class="dialogue-header">
-            <slot name="header"></slot>
-          </div>
+  	<div id="dialogue">
+	    <div class="dialogue-mask">
+	      <div class="dialogue-wrapper">
+	        <div class="dialogue-container">
+	          <div class="dialogue-header">
+	            <slot name="header"></slot>
+	          </div>
 
-          <div class="dialogue-body">
-            <slot name="body"></slot>
-          </div>
+	          <div class="dialogue-body">
+	            <slot name="body"></slot>
+	          </div>
 
-          <div class="dialogue-footer">
-            <slot name="footer">
-        		<button type="submit" class="dialogue-button-submit btn btn-primary" @click="$emit('submit')">Submit</button>
-        		<button class="dialogue-button-cancel btn btn-secondary" @click="$emit('cancel')">Cancel</button>
-            </slot>
-          </div>
-        </div>
-      </div>
-    </div>
+	          <div class="dialogue-footer">
+	            <slot name="footer">
+	        		<button type="submit" class="dialogue-button-submit btn btn-primary" @click="$emit('submit')">Submit</button>
+	        		<button class="dialogue-button-cancel btn btn-secondary" @click="$emit('cancel')">Cancel</button>
+	            </slot>
+	          </div>
+	        </div>
+	      </div>
+	    </div>
+	</div>
   </transition>
 </template>
 <style>
@@ -157,6 +182,10 @@
 </style>
 <script type="text/javascript">
 Vue.component('dialogue', {template: '#dialogue-template'})
+document.addEventListener('keyup', function(e){
+	if (e.keyCode==13) { var b = document.querySelector("#dialogue .dialogue-button-submit"); if (b) b.click(); }
+	if (e.keyCode==27) { var b = document.querySelector("#dialogue .dialogue-button-cancel"); if (b) b.click(); }
+});
 </script>
 
 <!-- App vue.js side -->
@@ -180,25 +209,52 @@ var app = new Vue({
     ],
     focusedConnection: false
   },
+  computed: {
+  	breadcrumbs: function() {
+  		return ["Applications (2)", "Environment variables"];
+  	},
+  	items: function() {
+  		return [
+  			{name: "App A", env: {a:1, b:2}, source: this.connections[0]},
+  			{name: "App B", env: {b:3, c:4}, source: this.connections[1]}
+  		];
+  	}
+  },
   methods: {
   	addConnection: function(proto) {
-  		this.focusedConnection = Object.assign({}, proto, {auth: false});
+  		var connection = Object.assign({}, proto, {auth: false});
+  		this.focusedConnection = connection;
 
-  		var i = (this.connections.indexOf(proto) + 1) || this.connections.length;
+  		var connections = this.connections;
+  		var i = (connections.indexOf(proto) + 1) || connections.length;
+		connections.splice(i, 0, connection);
 
-		this.connections.splice(i, 0, this.focusedConnection);
+  		connection.onCancel = function(c) {
+  			connections.splice(i, 1);
+  		};
   	},
   	reAuth: function(connection) {
   		connection.relogging = true;
+  		connection.onCancel = (function(user){ return function(c){c.user=user}; })(connection.user);
   		this.focusedConnection = connection;
   	},
   	removeConnection: function(connection) {
+  		this.connections.forEach(function(c){if(c.onCancel)c.onCancel(c)});
   		var i = this.connections.indexOf(connection);
   		if (i > -1) this.connections.splice(i, 1);
   	},
   	submitConnection: function() {
   		//attempt auth
+  		delete this.focusedConnection.onCancel;
   		this.focusedConnection = false;
+  	},
+  	unfocusConnection: function () {
+  		var c = this.focusedConnection;
+  		if (c && c.onCancel) {
+  			c.onCancel(c);
+  		}
+  		delete c.onCancel;
+  		this.focusedConnection = false
   	}
   }
 })
