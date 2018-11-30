@@ -130,13 +130,9 @@ header {
 			</li>
 		</ul>
 
-		<h3>{{breadcrumbs[breadcrumbs.length-1]}}</h3>
+		<h3>{{topCrumb.title}}</h3>
+		<component :is="topCrumb.view" :items="items"></component>
 
-		<ul class="items list-unstyled">
-			<li v-for="item in items">
-				{{item.name}}
-			</li>
-		</ul>
 	</main>
 </div>
 
@@ -188,8 +184,40 @@ document.addEventListener('keyup', function(e){
 });
 </script>
 
+
+<!-- component: apps-page -->
+<template type="text/x-template" id="apps-page-template">
+	<ul class="apps list-unstyled">
+		<li v-for="app in items" class="App">
+			<span class="App-Selection"><input type="checkbox"/></span>
+			<span class="App-Name">{{app.name}}</span>
+			<span class="App-Source">({{app.source.name}})</span>
+		</li>
+	</ul>
+</template>
+<style>
+.App {
+	border: 1px dotted gray;
+	padding: 0.5em 1em;
+	line-height: 2em;
+}
+.App .App-Name {
+	margin-left: 0.5em;
+}
+.App .App-Source {
+	margin-left: 2em;
+}
+</style>
+<script type="text/javascript">
+Vue.component('apps-page', {template: '#apps-page-template', props:["items"]})
+</script>
+
+
+
 <!-- App vue.js side -->
 <script type="text/javascript">
+var last = function(arr) {return arr && arr.length? arr[arr.length-1] : arr;};
+
 var app = new Vue({
   el: '#App',
   data: {
@@ -198,26 +226,72 @@ var app = new Vue({
 	    	url: "https://api.cloud.com/orgs/123456789/spaces/aa9876543210",
 	    	name: "dev eu",
 	    	user: "A123",
-	    	auth: "bearer aa123456789012345678901234567890"
+	    	auth: "bearer aa123456789012345678901234567890",
+	    	apps: [
+	  			{name: "App A1", env: {a:1, b:2}},
+	  			{name: "App A2", env: {b:3, c:4}},
+	  			{name: "App A3", env: {c:4, d:5}}
+	    	]
 	    },
 	    {
 	    	url: "https://api.cloud.com/orgs/123456789/spaces/bb9876543210",
 	    	name: "test eu",
 	    	user: "A123",
-	    	auth: "bearer bb123456789012345678901234567890"
+	    	auth: "bearer bb123456789012345678901234567890",
+	    	apps: [
+	  			{name: "App B1", env: {A:1, B:2}},
+	  			{name: "App B2", env: {B:3, C:4}},
+	  			{name: "App B3", env: {C:4, D:5}}
+	    	]
 	    }
     ],
     focusedConnection: false
   },
   computed: {
+  	selectors: function() {
+  		return [
+  			{
+  				title: "Applications",
+  				select: function(c) { return c.apps; },
+  				view: "apps-page"
+  			}
+  		];
+  	},
   	breadcrumbs: function() {
-  		return ["Applications (2)", "Environment variables"];
+  		var stackedItems = this.items;
+  		return this.selectors.map(function(sel, i, a) {
+  			var text = sel.title;
+
+  			if (i > 0 && i < a.length) {
+  				var chosen = stackedItems[i-1];
+  				" (" + chosen.length + ")"
+  			}
+
+  			return text;
+  		});
+  	},
+  	topCrumb: function() {
+  		return last(this.selectors);
+  	},
+  	stackedItems: function() {
+  		var stacked = [];
+  		var selected = this.connections.slice();
+  		for (var selector of this.selectors) {
+  			selected = selected
+  				.map(function(source) {
+	  				var items = selector.select(source);
+	  				for (var item of items) {
+	  					item.source=source;
+	  				}
+	  				return items;
+	  			})
+	  			.reduce(function(a,b){return a.concat(b);});
+			stacked.push(selected);
+  		}
+  		return stacked;
   	},
   	items: function() {
-  		return [
-  			{name: "App A", env: {a:1, b:2}, source: this.connections[0]},
-  			{name: "App B", env: {b:3, c:4}, source: this.connections[1]}
-  		];
+  		return last(this.stackedItems);
   	}
   },
   methods: {
