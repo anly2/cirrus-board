@@ -188,24 +188,40 @@ document.addEventListener('keyup', function(e){
 <!-- component: apps-page -->
 <template type="text/x-template" id="apps-page-template">
 	<ul class="apps list-unstyled">
-		<li v-for="app in items" class="App">
-			<span class="App-Selection"><input type="checkbox"/></span>
-			<span class="App-Name">{{app.name}}</span>
-			<span class="App-Source">({{app.source.name}})</span>
+		<li v-for="app in items" class="App row">
+			<div class="col-sm-6">
+				<span class="Selection"><input type="checkbox"/></span>
+				<span class="Source">({{app.source.name.charAt(0)}})</span>
+				<span class="Name">{{app.name}}</span>
+			</div>
+			<div class="col-sm-2">
+				({{app.state}})
+			</div>
+			<div class="col-sm-4">
+				<ul class="Actions list-inline">
+					<li><a>Bindings</a></li>
+					<li><a>Routes</a></li>
+					<li><a>Environment variables</a></li>
+					<li><a>Logs</a></li>
+				</ul>
+			</div>
 		</li>
 	</ul>
 </template>
 <style>
 .App {
-	border: 1px dotted gray;
+	border-top: 1px dotted gray;
 	padding: 0.5em 1em;
 	line-height: 2em;
 }
-.App .App-Name {
+.App .Name {
 	margin-left: 0.5em;
 }
-.App .App-Source {
-	margin-left: 2em;
+.App .Source {
+	margin-left: 1em;
+}
+.App .Actions > *:not(:first-child) {
+	margin-left: 1em;
 }
 </style>
 <script type="text/javascript">
@@ -228,9 +244,9 @@ var app = new Vue({
 	    	user: "A123",
 	    	auth: "bearer aa123456789012345678901234567890",
 	    	apps: [
-	  			{name: "App A1", env: {a:1, b:2}},
-	  			{name: "App A2", env: {b:3, c:4}},
-	  			{name: "App A3", env: {c:4, d:5}}
+	  			{name: "App A1", state: "running", env: {a:1, b:2}},
+	  			{name: "App A2", state: "stopped", env: {b:3, c:4}},
+	  			{name: "App A3", state: "running", env: {c:4, d:5}}
 	    	]
 	    },
 	    {
@@ -239,9 +255,9 @@ var app = new Vue({
 	    	user: "A123",
 	    	auth: "bearer bb123456789012345678901234567890",
 	    	apps: [
-	  			{name: "App B1", env: {A:1, B:2}},
-	  			{name: "App B2", env: {B:3, C:4}},
-	  			{name: "App B3", env: {C:4, D:5}}
+	  			{name: "App B1", state: "crashed", env: {A:1, B:2}},
+	  			{name: "App B2", state: "running", env: {B:3, C:4}},
+	  			{name: "App B3", state: "running", env: {C:4, D:5}}
 	    	]
 	    }
     ],
