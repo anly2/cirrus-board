@@ -38,8 +38,9 @@ header {
 	display: block;
 	line-height: 1.5em;
 	padding: 0.25em;
+}
+.connections:not(.empty) .add-button {
 	margin-top: -1em;
-	/*border: 1px solid red;*/
 }
 
 .Actions a {
@@ -54,8 +55,8 @@ header {
 
 <!-- App html side -->
 <div id="App">
-	<header class="connections">
-		<h3 class="hidden-md hidden-lg">Connections</h3>
+	<header class="connections" :class="{'empty container-fluid':!connections.length}">
+		<h3 :class="{'hidden-md hidden-lg':connections.length > 0}">Connections</h3>
 		<ul class="list-unstyled">
 			<li v-for="connection in connections">
 				<div class="Connection" :class="{focused: connection==focusedConnection}">
@@ -90,7 +91,7 @@ header {
 		</ul>
 		<a class="add-button" @click="addConnection()" @submit="alert('sub')">
 			<i class="fa fa-plus"></i>
-			<span class="hidden-lg">Add connection</span>
+			<span :class="{'hidden-lg': connections.length>0}">Add connection</span>
 		</a>
 		<dialogue v-if="focusedConnection" @submit="submitConnection()" @cancel="unfocusConnection()">
 		    <h3 slot="header">Connection</h3>
@@ -119,7 +120,7 @@ header {
 		  </dialogue>
 	</header>
 
-	<main class="container-fluid">
+	<main class="container-fluid" v-if="connections.length > 0">
 		<ul class="breadcrumbs list-inline" v-if="breadcrumbs.length > 1">
 			<li v-for="(crumb, index) in breadcrumbs">
 				&gt;&nbsp;
@@ -188,21 +189,21 @@ document.addEventListener('keyup', function(e){
 <!-- component: apps-page -->
 <template type="text/x-template" id="apps-page-template">
 	<ul class="apps list-unstyled">
-		<li v-for="app in items" class="App row">
-			<div class="col-sm-6">
-				<span class="Selection"><input type="checkbox"/></span>
+		<li v-for="(app, index) in items" class="App row" :class="{'selected': app.selected}">
+			<label class="col-sm-6">
+				<span class="Selection"><input type="checkbox" v-model="app.selected" /></span>
 				<span class="Source">({{app.source.name.charAt(0)}})</span>
 				<span class="Name">{{app.name}}</span>
-			</div>
+			</label>
 			<div class="col-sm-2">
 				({{app.state}})
 			</div>
 			<div class="col-sm-4">
 				<ul class="Actions list-inline">
-					<li><a>Bindings</a></li>
-					<li><a>Routes</a></li>
-					<li><a>Environment variables</a></li>
-					<li><a>Logs</a></li>
+					<li><a class="btn" :class="{'disabled':!app.selected && someSelected}">Bindings</a></li>
+					<li><a class="btn" :class="{'disabled':!app.selected && someSelected}">Routes</a></li>
+					<li><a class="btn" :class="{'disabled':!app.selected && someSelected}">Environment variables</a></li>
+					<li><a class="btn" :class="{'disabled':!app.selected && someSelected}">Logs</a></li>
 				</ul>
 			</div>
 		</li>
@@ -214,18 +215,28 @@ document.addEventListener('keyup', function(e){
 	padding: 0.5em 1em;
 	line-height: 2em;
 }
+.App:last-child {
+	border-bottom: 1px dotted gray;
+}
+.App:not(.selected) label {
+	font-weight: normal;
+}
 .App .Name {
 	margin-left: 0.5em;
 }
 .App .Source {
-	margin-left: 1em;
-}
-.App .Actions > *:not(:first-child) {
+	font-family: Consolas;
 	margin-left: 1em;
 }
 </style>
 <script type="text/javascript">
-Vue.component('apps-page', {template: '#apps-page-template', props:["items"]})
+Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
+	computed: {
+	  	someSelected: function() {
+	  		return this.items.some(e=>e.selected);
+	  	}
+	}
+});
 </script>
 
 
@@ -268,7 +279,7 @@ var app = new Vue({
   		return [
   			{
   				title: "Applications",
-  				select: function(c) { return c.apps; },
+  				select: function(c) { return c.apps||[]; },
   				view: "apps-page"
   			}
   		];
@@ -301,7 +312,7 @@ var app = new Vue({
 	  				}
 	  				return items;
 	  			})
-	  			.reduce(function(a,b){return a.concat(b);});
+	  			.reduce(function(a,b){return a.concat(b);}, []);
 			stacked.push(selected);
   		}
   		return stacked;
