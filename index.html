@@ -200,10 +200,16 @@ document.addEventListener('keyup', function(e){
 			</div>
 			<div class="col-sm-4">
 				<ul class="Actions list-inline">
-					<li><a class="btn" :class="{'disabled':!app.selected && someSelected}">Bindings</a></li>
-					<li><a class="btn" :class="{'disabled':!app.selected && someSelected}">Routes</a></li>
-					<li><a class="btn" :class="{'disabled':!app.selected && someSelected}">Environment variables</a></li>
-					<li><a class="btn" :class="{'disabled':!app.selected && someSelected}">Logs</a></li>
+					<li v-for="(action, actionIndex) in ['Bindings', 'Routes', 'Environment variables', 'Logs']">
+						<span v-if="!app.selected && someSelected">
+							<a class="btn disabled">{{action}}</a>
+						</span>
+						<span v-else
+						      :class="{'focused': someSelected && actionFocused == actionIndex}"
+						      @mouseenter="actionFocused = actionIndex" @mouseleave="actionFocused = -1">
+							<a class="btn">{{action}}</a>
+						</span>
+					</li>
 				</ul>
 			</div>
 		</li>
@@ -228,9 +234,16 @@ document.addEventListener('keyup', function(e){
 	font-family: Consolas;
 	margin-left: 1em;
 }
+.App .Actions .focused a.btn {
+	text-decoration: underline;
+	color: black;
+}
 </style>
 <script type="text/javascript">
 Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
+	data: function() { return {
+		actionFocused: -1
+	};},
 	computed: {
 	  	someSelected: function() {
 	  		return this.items.some(e=>e.selected);
