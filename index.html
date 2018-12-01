@@ -123,16 +123,15 @@ header {
 	<main class="container-fluid" v-if="connections.length > 0">
 		<ul class="breadcrumbs list-inline" v-if="breadcrumbs.length > 1">
 			<li v-for="(crumb, index) in breadcrumbs">
-				&gt;&nbsp;
+				&rsaquo;&nbsp;
 				<span v-if="index < breadcrumbs.length-1">
-					<a class="btn" @click="crumb.select">{{crumb.text}}</a>
+					<a @click="crumb.select">{{crumb.text}}</a>
 				</span>
 				<b v-else>{{crumb.text}}</b>
 			</li>
 		</ul>
 
 		<div v-if="topCrumb">
-			<h3>{{topCrumb.title}}</h3>
 			<component :is="topCrumb.view" :items="items" @select="select"></component>
 		</div>
 		<span v-else>{{showApps()}}</span>
@@ -191,6 +190,8 @@ document.addEventListener('keyup', function(e){
 
 <!-- component: apps-page -->
 <template type="text/x-template" id="apps-page-template">
+<div class="Page">
+	<h3>Applications</h3>
 	<ul class="apps list-unstyled">
 		<li v-for="(app, index) in items" class="App row" :class="{'selected': app.selected}">
 			<label class="col-sm-6">
@@ -222,6 +223,7 @@ document.addEventListener('keyup', function(e){
 			</div>
 		</li>
 	</ul>
+</div>
 </template>
 <style>
 .App {
@@ -279,12 +281,30 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 
 <!-- component: app-env-page -->
 <template type="text/x-template" id="app-env-page-template">
-	<ul class="app-env list-unstyled">
-		<li v-for="envVar in items" class="EnvVar row">
-			<span class="Name">{{envVar.name}}</span>
-			<span class="Value">{{envVar.value}}</span>
-		</li>
-	</ul>
+<div class="Page">
+	<h3>Environment variables</h3>
+	<div style="max-width: 40em;">
+		<table class="app-env table table-hover">
+			<thead>
+				<tr>
+					<th>Name:</th>
+					<th>Value:</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr v-for="envVar in items" class="EnvVar">
+					<td class="Name"> <input type="text" v-model="envVar.name" class="form-control" /></td>
+					<td class="Value"> <input type="text" v-model="envVar.value" class="form-control" /> </td>
+				</tr>
+			</tbody>
+			<tfoot>
+				<tr>
+					<td colspan=2>Add</td>
+				</tr>
+			</tfoot>
+		</ul>
+	</div>
+</table>
 </template>
 <script type="text/javascript">
 Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"]});
