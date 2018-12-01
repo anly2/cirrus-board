@@ -125,14 +125,17 @@ header {
 			<li v-for="(crumb, index) in breadcrumbs">
 				&gt;&nbsp;
 				<span v-if="index < breadcrumbs.length-1">
-					<a>{{crumb}}</a>
+					<a class="btn" @click="crumb.select">{{crumb.text}}</a>
 				</span>
-				<b v-else>{{crumb}}</b>
+				<b v-else>{{crumb.text}}</b>
 			</li>
 		</ul>
 
-		<h3>{{topCrumb.title}}</h3>
-		<component :is="topCrumb.view" :items="items"></component>
+		<div v-if="topCrumb">
+			<h3>{{topCrumb.title}}</h3>
+			<component :is="topCrumb.view" :items="items" @select="select"></component>
+		</div>
+		<span v-else>{{showApps()}}</span>
 
 	</main>
 </div>
@@ -200,14 +203,19 @@ document.addEventListener('keyup', function(e){
 			</div>
 			<div class="col-sm-4">
 				<ul class="Actions list-inline">
-					<li v-for="(action, actionIndex) in ['Bindings', 'Routes', 'Environment variables', 'Logs']">
-						<span v-if="!app.selected && someSelected">
-							<a class="btn disabled">{{action}}</a>
-						</span>
-						<span v-else
+					<li v-for="(link, actionIndex) in [
+						{title:'Bindings', action:showEnv},
+						{title:'Routes', action:showEnv},
+						{title:'Environment variables', action:showEnv},
+						{title:'Logs', action:showEnv}
+					]">
+						<span v-if="app.selected || !someSelected"
 						      :class="{'focused': someSelected && actionFocused == actionIndex}"
 						      @mouseenter="actionFocused = actionIndex" @mouseleave="actionFocused = -1">
-							<a class="btn">{{action}}</a>
+							<a class="btn" @click="link.action(app)">{{link.title}}</a>
+						</span>
+						<span v-else>
+							<a class="btn disabled">{{link.title}}</a>
 						</span>
 					</li>
 				</ul>
@@ -248,15 +256,46 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 	  	someSelected: function() {
 	  		return this.items.some(e=>e.selected);
 	  	}
+	},
+	methods: {
+		showEnv: function(app) {
+			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
+
+			this.$emit('select', {
+  				title: "Environment variables",
+  				view: "app-env-page",
+  				filter: (function(selectedNames) {
+  						return function(app) { return selectedNames.includes(app.name); };
+					}(selected.map(function(app) { return app.name; }))),
+  				select: function(app) {
+					return Object.entries(app.env)
+						.map(function(entry) { return {"name": entry[0], "value": entry[1]}; });
+				}
+  			});
+		}
 	}
 });
 </script>
+
+<!-- component: app-env-page -->
+<template type="text/x-template" id="app-env-page-template">
+	<ul class="app-env list-unstyled">
+		<li v-for="envVar in items" class="EnvVar row">
+			<span class="Name">{{envVar.name}}</span>
+			<span class="Value">{{envVar.value}}</span>
+		</li>
+	</ul>
+</template>
+<script type="text/javascript">
+Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"]});
+</script>
+
 
 
 
 <!-- App vue.js side -->
 <script type="text/javascript">
-var last = function(arr) {return arr && arr.length? arr[arr.length-1] : arr;};
+var last = function(arr) {return arr && arr.length? arr[arr.length-1] : undefined;};
 
 var app = new Vue({
   el: '#App',
@@ -285,38 +324,38 @@ var app = new Vue({
 	    	]
 	    }
     ],
-    focusedConnection: false
+    focusedConnection: false,
+  	selectors: []
   },
   computed: {
-  	selectors: function() {
-  		return [
-  			{
-  				title: "Applications",
-  				select: function(c) { return c.apps||[]; },
-  				view: "apps-page"
-  			}
-  		];
-  	},
   	breadcrumbs: function() {
-  		var stackedItems = this.items;
-  		return this.selectors.map(function(sel, i, a) {
+  		var $this = this;
+  		return this.selectors.map(function(sel, i) {
   			var text = sel.title;
 
-  			if (i > 0 && i < a.length) {
-  				var chosen = stackedItems[i-1];
-  				" (" + chosen.length + ")"
-  			}
+			var chosen = $this.stackedItems[i+1];
+			if (chosen) {
+				text += " (" + chosen.length + ")";
+			}
 
-  			return text;
+			var select = function() {
+				$this.selectors = $this.selectors.slice(0, i+1);
+			};
+
+  			return {text: text, select: select};
   		});
   	},
   	topCrumb: function() {
   		return last(this.selectors);
   	},
   	stackedItems: function() {
-  		var stacked = [];
   		var selected = this.connections.slice();
+  		var stacked = [selected];
   		for (var selector of this.selectors) {
+  			if (selector.filter) {
+  				selected = selected.filter(selector.filter);
+  				stacked[stacked.length-1] = selected;
+  			}
   			selected = selected
   				.map(function(source) {
 	  				var items = selector.select(source);
@@ -369,6 +408,20 @@ var app = new Vue({
   		}
   		delete c.onCancel;
   		this.focusedConnection = false
+  	},
+  	showApps: function() {
+  		this.selectors = [
+  			{
+  				title: "Applications",
+  				view: "apps-page",
+  				select: function(connection) {
+  					return connection.apps||[];
+				}
+  			}
+  		];
+  	},
+  	select: function(selector) {
+  		this.selectors.push(selector);
   	}
   }
 })
