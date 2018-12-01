@@ -289,30 +289,58 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 <div class="Page">
 	<h3>Environment variables</h3>
 	<div style="max-width: 40em;">
-		<table class="app-env table table-hover">
+		<table class="app-env table" v-for="(group, groupName) in groupedVars">
 			<thead>
 				<tr>
-					<th>Name:</th>
-					<th>Value:</th>
+					<th colspan="3">{{group.isTheOverlap? "Overlapping everywhere" : groupName}}</th>
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="envVar in items" class="EnvVar">
+				<tr class="EnvVar" v-for="envVar in group">
 					<td class="Name"> <input type="text" v-model="envVar.name" class="form-control" /></td>
 					<td class="Value"> <input type="text" v-model="envVar.value" class="form-control" /> </td>
+					<td class="Actions">
+						<a class="btn" title="Remove"><i class="fa fa-minus"></i></a>
+						<template v-if="group.isTheOverlap">
+							<a class="btn" title="Ungroup"><b>&#8623;</b></a>
+						</template>
+					</td>
 				</tr>
 			</tbody>
 			<tfoot>
 				<tr>
-					<td colspan=2>Add</td>
+					<td colspan=3>Add</td>
 				</tr>
 			</tfoot>
-		</ul>
+		</table>
 	</div>
 </table>
 </template>
 <script type="text/javascript">
-Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"]});
+Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"],
+	computed: {
+		itemsByApp: function() {
+			return groupBy(this.items, function(e) { return e.source.name; });
+		},
+		overlapping: function() {
+			return [{name:"c", value:"4"}];
+		},
+		groupedVars: function() {
+			var grouped = this.itemsByApp;
+
+			var overlap = this.overlapping;
+			overlap.isTheOverlap = true;
+
+			var sorted = {};
+			sorted["overlapping"] = overlap;
+			Object.keys(grouped).sort().forEach(function(key) {
+			  sorted[key] = grouped[key];
+			});
+
+			return sorted;
+		}
+	}
+});
 </script>
 
 
@@ -321,6 +349,7 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 <!-- App vue.js side -->
 <script type="text/javascript">
 var last = function(arr) {return arr && arr.length? arr[arr.length-1] : undefined;};
+var groupBy = function(arr, key) { return arr.reduce(function(r, x) { var k = key(x); (r[k] = r[k] || []).push(x); return r; }, {}) };
 
 var app = new Vue({
   el: '#App',
