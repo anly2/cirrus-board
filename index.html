@@ -259,6 +259,11 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 	  		return this.items.some(e=>e.selected);
 	  	}
 	},
+	//DEBUG ONLY
+	created: function() {
+		this.items.forEach(app => app.selected = true);
+		this.showEnv();
+	},
 	methods: {
 		showEnv: function(app) {
 			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
