@@ -250,6 +250,17 @@ document.addEventListener('keyup', function(e){
 }
 </style>
 <script type="text/javascript">
+var envVarSel = function() {
+	return {
+		title: "Environment variables",
+		view: "app-env-page",
+		select: function(app) {
+			return Object.entries(app.env)
+				.map(function(entry) { return {"name": entry[0], "value": entry[1]}; });
+		}
+	};
+};
+
 Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 	data: function() { return {
 		actionFocused: -1
@@ -263,17 +274,12 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 		showEnv: function(app) {
 			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
 
-			this.$emit('select', {
-  				title: "Environment variables",
-  				view: "app-env-page",
-  				filter: (function(selectedNames) {
-  						return function(app) { return selectedNames.includes(app.name); };
-					}(selected.map(function(app) { return app.name; }))),
-  				select: function(app) {
-					return Object.entries(app.env)
-						.map(function(entry) { return {"name": entry[0], "value": entry[1]}; });
-				}
-  			});
+			var selector = envVarSel();
+			selector.filter = (function(selectedNames) {
+				return function(app) { return selectedNames.includes(app.name); };
+			}(selected.map(function(app) { return app.name; })));
+
+			this.$emit('select', selector);
 		}
 	}
 });
@@ -378,22 +384,9 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 <script type="text/javascript">
 var last = function(arr) {return arr && arr.length? arr[arr.length-1] : undefined;};
 var groupBy = function(arr, key) { return arr.reduce(function(r, x) { var k = key(x); (r[k] = r[k] || []).push(x); return r; }, {}) };
-var overlap = function(grouped, eq) {
-	if (!eq) eq = function(a,b) {return a==b;};
-	var categories = Object.keys(grouped);
-	if (!categories.length) return;
-	var topCat = categories.shift();
-	var candidates = grouped[topCat].slice();
-	for (var cat of categories) {
-		for (var i=0; i<candidates.length; i++) {
-			var candidate = candidates[i]
-			if (!grouped[cat].some(function(e){return eq(e, candidate);})) {
-				candidates.splice(i,1); i--;
-			}
-		}
-	}
-	return candidates;
-}
+var overlap = function(grouped, eq) { if (!eq) eq = function(a,b) {return a==b;}; var categories = Object.keys(grouped); if (!categories.length) return; var topCat = categories.shift(); var candidates = grouped[topCat].slice(); for (var cat of categories) { for (var i=0; i<candidates.length; i++) { var candidate = candidates[i]; if (!grouped[cat].some(function(e){return eq(e, candidate);})) { candidates.splice(i,1); i--; } } } return candidates; };
+
+String.prototype.extract = function(regex, i) { var parts; this.replace(regex, function(){ parts = Array.prototype.slice.call(arguments, 1, -2);}); if (typeof i != 'undefined' && parts) { return parts[i]; } return parts; };
 
 
 var app = new Vue({
@@ -408,7 +401,8 @@ var app = new Vue({
 	    	apps: [
 	  			{name: "App A1", state: "running", env: {a:1, b:2}},
 	  			{name: "App A2", state: "stopped", env: {b:3, c:4}},
-	  			{name: "App A3", state: "running", env: {c:4, d:5}}
+	  			{name: "App A3", state: "running", env: {c:4, d:5}},
+	  			{name: "App X", state: "running", env: {c:4, d:5}}
 	    	]
 	    },
 	    {
@@ -419,7 +413,8 @@ var app = new Vue({
 	    	apps: [
 	  			{name: "App B1", state: "crashed", env: {A:1, B:2, C:3}},
 	  			{name: "App B2", state: "running", env: {B:2, C:4, A:1}},
-	  			{name: "App B3", state: "running", env: {C:4, D:5}}
+	  			{name: "App B3", state: "running", env: {C:4, D:5}},
+	  			{name: "App X", state: "running", env: {c:4, d:5}}
 	    	]
 	    }
     ],
@@ -508,19 +503,94 @@ var app = new Vue({
   		delete c.onCancel;
   		this.focusedConnection = false
   	},
-  	showApps: function() {
-  		this.selectors = [
-  			{
-  				title: "Applications",
-  				view: "apps-page",
-  				select: function(connection) {
-  					return connection.apps||[];
-				}
+
+  	navigate: function(path) {
+  		this.selectors = this.selectorsFromPath(path);
+  	},
+  	selectorsFromPath: function(fullPath) {
+  		var filterFromPath = this.filterFromPath;
+  		var appS = this.appSelector;
+  		var s = (fullPath||"").split('&')
+  			.map(function(path) {
+  				var parts = path.extract(/^(.*?)(?::(.*)|$)/);
+  				var name = parts[0];
+  				if (name == "apps") return appS();
+  				if (name != "envVars") return undefined;
+  				var sel = envVarSel();
+  				var filter = filterFromPath(parts[1]);
+  				if (filter) sel.filter = filter;
+  				return sel;
+  			})
+  			.filter(function(e){return !!e;});
+		console.log(s);
+		return s;
+  	},
+  	filterFromPath: function(path) {
+  		if (!path || !path.trim()) {
+  			return function() { return true; };
+  		}
+
+  		var conditions = path.split(";").map(this.conditionFromPath);
+  		return function(e) {
+  			for (var condition of conditions) {
+  				if (condition(e))
+  					return true;
   			}
-  		];
+  			return false;
+  		};
+  	},
+  	conditionFromPath: function(path) {
+  		if (!path || !path.trim()) {
+  			return function() { return true; };
+  		}
+
+  		var acceptable = {};
+
+  		var a = acceptable;
+  		var parts = path.split("/");
+  		for (var i=parts.length-1; i>=0; i--) {
+  			var names = parts[i];
+  			var b = (i==0)? true : {};
+  			names.split(/\s*,\s*/).forEach(function(name){
+  				a[name] = b;
+  			});
+  			a = b;
+  		}
+
+  		return function(e) {
+  			console.log("filter", e, e.name);
+  			var allowed = acceptable;
+  			do {
+	  			if (!e.name) return false;
+	  			allowed = allowed[e.name];
+	  			if (!allowed) return false;
+	  			e = e.source;
+	  		} while (typeof allowed == 'object');
+	  		return true;
+  		};
+  	},
+
+  	showApps: function() {
+  		this.selectors = [this.appSelector];
+  	},
+  	appSelector: function() {
+  		return {
+			title: "Applications",
+			view: "apps-page",
+			select: function(connection) {
+				return connection.apps||[];
+			}
+		};
   	},
   	select: function(selector) {
   		this.selectors.push(selector);
+  	}
+  },
+  created: function() {
+  	var f = window.location.hash;
+  	if (f) {
+  		f = decodeURI(f).replace(/^#/, '');
+  		this.navigate(f);
   	}
   }
 })
