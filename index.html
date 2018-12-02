@@ -348,23 +348,20 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 		groupedVars: function() {
 			var grouped = this.itemsByApp;
 
-			var o;
+			var overlapping;
 			if (Object.keys(grouped).length > 1) {
 				var eq = function(a,b) {
 					return a==b || (a.name==b.name && a.value==b.value);
 				};
 
-				o = overlap(grouped, eq);
-			}
-
-			if (!!o) {
-				o.isTheOverlap = true;
+				overlapping = overlap(grouped, eq);
+				overlapping.isTheOverlap = true;
 
 				for (var k in grouped) {
 					var group = grouped[k];
 					for (var i=0; i<group.length; i++) {
 						var item = group[i];
-						if (o.some(function(e) {return eq(e,item);})) {
+						if (overlapping.some(function(e) {return eq(e,item);})) {
 							group.splice(i,1); i--;
 						}
 					}
@@ -372,7 +369,7 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 			}
 
 			var sorted = {};
-			if (!!o) sorted["overlapping"] = o;
+			if (!!overlapping) sorted["overlapping"] = overlapping;
 			Object.keys(grouped).sort().forEach(function(key) {
 			  sorted[key] = grouped[key];
 			});
