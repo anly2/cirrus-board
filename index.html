@@ -259,13 +259,6 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 	  		return this.items.some(e=>e.selected);
 	  	}
 	},
-	//DEBUG ONLY
-	created: function() {
-		// this.items.forEach(app => app.selected = true);
-		this.items[1].selected = true;
-		this.items[2].selected = true;
-		this.showEnv();
-	},
 	methods: {
 		showEnv: function(app) {
 			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
@@ -423,8 +416,8 @@ var app = new Vue({
 	    	user: "A123",
 	    	auth: "bearer bb123456789012345678901234567890",
 	    	apps: [
-	  			{name: "App B1", state: "crashed", env: {A:1, B:2}},
-	  			{name: "App B2", state: "running", env: {B:3, C:4}},
+	  			{name: "App B1", state: "crashed", env: {A:1, B:2, C:3}},
+	  			{name: "App B2", state: "running", env: {B:2, C:4, A:1}},
 	  			{name: "App B3", state: "running", env: {C:4, D:5}}
 	    	]
 	    }
