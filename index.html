@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Cirrus board</title>
-	<meta charset="UTF-8"> 
+    <title>Cirrus board</title>
+    <meta charset="UTF-8"> 
 
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-	<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head>
 <body>
 
@@ -15,156 +15,156 @@
 <!-- App css side -->
 <style type="text/css">
 header {
-	margin-bottom: 1em;
+    margin-bottom: 1em;
 }
 
 .Connection {
-	font-size: 1.25em;
-	padding: 0.25em 1em;
-	/* #1234EF http://materialuicolors.co/?utm_source=launchers */
-	background-color: #B0BEC5;
-	border-bottom: 1px solid #263238;
+    font-size: 1.25em;
+    padding: 0.25em 1em;
+    /* #1234EF http://materialuicolors.co/?utm_source=launchers */
+    background-color: #B0BEC5;
+    border-bottom: 1px solid #263238;
 }
 .Connection.focused {
-	border-left: 0.25em solid #455A64;
-	padding-left: 0.75em;
+    border-left: 0.25em solid #455A64;
+    padding-left: 0.75em;
 }
 .Connection > .Name {
-	font-variant: small-caps;
+    font-variant: small-caps;
 }
 .Connection > .User {
-	font-size: 0.8em;
-	line-height: 1.75em;
+    font-size: 0.8em;
+    line-height: 1.75em;
 }
 .connections .add-button {
-	display: block;
-	line-height: 1.5em;
-	padding: 0.25em;
+    display: block;
+    line-height: 1.5em;
+    padding: 0.25em;
 }
 .connections:not(.empty) .add-button {
-	margin-top: -1em;
+    margin-top: -1em;
 }
 
 .Actions a {
-	cursor: pointer;
+    cursor: pointer;
 }
 
 .breadcrumbs {
-	font-size: 1.2em;
+    font-size: 1.2em;
 }
 </style>
 
 
 <!-- App html side -->
 <div id="App">
-	<header class="connections" :class="{'empty container-fluid':!connections.length}">
-		<h3 :class="{'hidden-md hidden-lg':connections.length > 0}">Connections</h3>
-		<ul class="list-unstyled">
-			<li v-for="connection in connections">
-				<div class="Connection" :class="{focused: connection==focusedConnection}">
-					<div class="row">
-						<div class="Name col-xs-6">{{connection.name}}</div>
-						<div class="User col-xs-3">
-							<span v-if="connection.auth">as: {{connection.user}}</span>
-							<span v-else><i>not logged in</i></span>
-						</div>
-						<div class="Actions col-xs-3 text-right">
-							<ul class="list-inline">
-								<li>
-									<a @click="addConnection(connection)" title="Duplicate">
-										<i class="fa fa-clone"></i>
-									</a>
-								</li>
-								<li>
-									<a @click="reAuth(connection)" title="Logout">
-										<i class="fa fa-user-times"></i>
-									</a>
-								</li>
-								<li>
-									<a @click="removeConnection(connection)" title="Terminate">
-										<i class="fa fa-power-off"></i>
-									</a>
-								</li>
-							</ul>
-						</div>
-					</div>
-				</div>
-			</li>
-		</ul>
-		<a class="add-button" @click="addConnection()" @submit="alert('sub')">
-			<i class="fa fa-plus"></i>
-			<span :class="{'hidden-lg': connections.length>0}">Add connection</span>
-		</a>
-		<dialogue v-if="focusedConnection" @submit="submitConnection()" @cancel="unfocusConnection()">
-		    <h3 slot="header">Connection</h3>
-		    <form slot="body">
-		      <div class="form-group row">
-		        <label class="col-xs-2 col-form-label" for="focusedConnection_name">Name:</label>
-		        <div class="col-xs-10">
-			        <input type="text" v-model="focusedConnection.name" class="form-control" :readOnly="focusedConnection.relogging" id="focusedConnection_name" placeholder="Connection name">
-		        </div>
-		      </div>
-		      <div v-if="!focusedConnection.auth||focusedConnection.relogging">
-			      <div class="form-group row">
-			        <label class="col-xs-2 col-form-label" for="focusedConnection_user">Username:</label>
-			        <div class="col-xs-10">
-			        	<input type="text" v-model="focusedConnection.user" class="form-control" id="focusedConnection_user" placeholder="Username">
-			        </div>
-			      </div>
-			      <div class="form-group row">
-			        <label class="col-xs-2 col-form-label" for="focusedConnection_password">Password:</label>
-			        <div class="col-xs-10">
-			        	<input type="password" class="form-control" id="focusedConnection_password" placeholder="Password">
-			        </div>
-			      </div>
-			  </div>
-		    </form>
-		  </dialogue>
-	</header>
+    <header class="connections" :class="{'empty container-fluid':!connections.length}">
+        <h3 :class="{'hidden-md hidden-lg':connections.length > 0}">Connections</h3>
+        <ul class="list-unstyled">
+            <li v-for="connection in connections">
+                <div class="Connection" :class="{focused: connection==focusedConnection}">
+                    <div class="row">
+                        <div class="Name col-xs-6">{{connection.name}}</div>
+                        <div class="User col-xs-3">
+                            <span v-if="connection.auth">as: {{connection.user}}</span>
+                            <span v-else><i>not logged in</i></span>
+                        </div>
+                        <div class="Actions col-xs-3 text-right">
+                            <ul class="list-inline">
+                                <li>
+                                    <a @click="addConnection(connection)" title="Duplicate">
+                                        <i class="fa fa-clone"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a @click="reAuth(connection)" title="Logout">
+                                        <i class="fa fa-user-times"></i>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a @click="removeConnection(connection)" title="Terminate">
+                                        <i class="fa fa-power-off"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <a class="add-button" @click="addConnection()" @submit="alert('sub')">
+            <i class="fa fa-plus"></i>
+            <span :class="{'hidden-lg': connections.length>0}">Add connection</span>
+        </a>
+        <dialogue v-if="focusedConnection" @submit="submitConnection()" @cancel="unfocusConnection()">
+            <h3 slot="header">Connection</h3>
+            <form slot="body">
+              <div class="form-group row">
+                <label class="col-xs-2 col-form-label" for="focusedConnection_name">Name:</label>
+                <div class="col-xs-10">
+                    <input type="text" v-model="focusedConnection.name" class="form-control" :readOnly="focusedConnection.relogging" id="focusedConnection_name" placeholder="Connection name">
+                </div>
+              </div>
+              <div v-if="!focusedConnection.auth||focusedConnection.relogging">
+                  <div class="form-group row">
+                    <label class="col-xs-2 col-form-label" for="focusedConnection_user">Username:</label>
+                    <div class="col-xs-10">
+                        <input type="text" v-model="focusedConnection.user" class="form-control" id="focusedConnection_user" placeholder="Username">
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <label class="col-xs-2 col-form-label" for="focusedConnection_password">Password:</label>
+                    <div class="col-xs-10">
+                        <input type="password" class="form-control" id="focusedConnection_password" placeholder="Password">
+                    </div>
+                  </div>
+              </div>
+            </form>
+          </dialogue>
+    </header>
 
-	<main class="container-fluid" v-if="connections.length > 0">
-		<ul class="breadcrumbs list-inline" v-if="breadcrumbs.length > 1">
-			<li v-for="(crumb, index) in breadcrumbs">
-				&rsaquo;&nbsp;
-				<span v-if="index < breadcrumbs.length-1">
-					<a @click="crumb.select">{{crumb.text}}</a>
-				</span>
-				<b v-else>{{crumb.text}}</b>
-			</li>
-		</ul>
+    <main class="container-fluid" v-if="connections.length > 0">
+        <ul class="breadcrumbs list-inline" v-if="breadcrumbs.length > 1">
+            <li v-for="(crumb, index) in breadcrumbs">
+                &rsaquo;&nbsp;
+                <span v-if="index < breadcrumbs.length-1">
+                    <a @click="crumb.select">{{crumb.text}}</a>
+                </span>
+                <b v-else>{{crumb.text}}</b>
+            </li>
+        </ul>
 
-		<template v-if="topCrumb">
-			<component :is="topCrumb.view" :items="items" @select="select"></component>
-		</template>
+        <template v-if="topCrumb">
+            <component :is="topCrumb.view" :items="items" @select="select"></component>
+        </template>
 
-	</main>
+    </main>
 </div>
 
 <!-- component: dialogue -->
 <template type="text/x-template" id="dialogue-template">
   <transition name="dialogue">
-  	<div id="dialogue">
-	    <div class="dialogue-mask">
-	      <div class="dialogue-wrapper">
-	        <div class="dialogue-container">
-	          <div class="dialogue-header">
-	            <slot name="header"></slot>
-	          </div>
+    <div id="dialogue">
+        <div class="dialogue-mask">
+          <div class="dialogue-wrapper">
+            <div class="dialogue-container">
+              <div class="dialogue-header">
+                <slot name="header"></slot>
+              </div>
 
-	          <div class="dialogue-body">
-	            <slot name="body"></slot>
-	          </div>
+              <div class="dialogue-body">
+                <slot name="body"></slot>
+              </div>
 
-	          <div class="dialogue-footer">
-	            <slot name="footer">
-	        		<button type="submit" class="dialogue-button-submit btn btn-primary" @click="$emit('submit')">Submit</button>
-	        		<button class="dialogue-button-cancel btn btn-secondary" @click="$emit('cancel')">Cancel</button>
-	            </slot>
-	          </div>
-	        </div>
-	      </div>
-	    </div>
-	</div>
+              <div class="dialogue-footer">
+                <slot name="footer">
+                    <button type="submit" class="dialogue-button-submit btn btn-primary" @click="$emit('submit')">Submit</button>
+                    <button class="dialogue-button-cancel btn btn-secondary" @click="$emit('cancel')">Cancel</button>
+                </slot>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
   </transition>
 </template>
 <style>
@@ -183,8 +183,8 @@ header {
 <script type="text/javascript">
 Vue.component('dialogue', {template: '#dialogue-template'})
 document.addEventListener('keyup', function(e){
-	if (e.keyCode==13) { var b = document.querySelector("#dialogue .dialogue-button-submit"); if (b) b.click(); }
-	if (e.keyCode==27) { var b = document.querySelector("#dialogue .dialogue-button-cancel"); if (b) b.click(); }
+    if (e.keyCode==13) { var b = document.querySelector("#dialogue .dialogue-button-submit"); if (b) b.click(); }
+    if (e.keyCode==27) { var b = document.querySelector("#dialogue .dialogue-button-cancel"); if (b) b.click(); }
 });
 </script>
 
@@ -192,187 +192,187 @@ document.addEventListener('keyup', function(e){
 <!-- component: apps-page -->
 <template type="text/x-template" id="apps-page-template">
 <div class="Page">
-	<h3>Applications</h3>
-	<ul class="apps list-unstyled">
-		<li v-for="(app, index) in items" class="App row" :class="{'selected': app.selected}">
-			<label class="col-sm-6">
-				<span class="Selection"><input type="checkbox" v-model="app.selected" /></span>
-				<span class="Source">({{app.source.name.charAt(0)}})</span>
-				<span class="Name">{{app.name}}</span>
-			</label>
-			<div class="col-sm-2">
-				({{app.state}})
-			</div>
-			<div class="col-sm-4">
-				<ul class="Actions list-inline">
-					<li v-for="(link, actionIndex) in [
-						{title:'Bindings', action:showEnv},
-						{title:'Routes', action:showEnv},
-						{title:'Environment variables', action:showEnv},
-						{title:'Logs', action:showEnv}
-					]">
-						<span v-if="app.selected || !someSelected"
-						      :class="{'focused': someSelected && actionFocused == actionIndex}"
-						      @mouseenter="actionFocused = actionIndex" @mouseleave="actionFocused = -1">
-							<a class="btn" @click="link.action(app)">{{link.title}}</a>
-						</span>
-						<span v-else>
-							<a class="btn disabled">{{link.title}}</a>
-						</span>
-					</li>
-				</ul>
-			</div>
-		</li>
-	</ul>
+    <h3>Applications</h3>
+    <ul class="apps list-unstyled">
+        <li v-for="(app, index) in items" class="App row" :class="{'selected': app.selected}">
+            <label class="col-sm-6">
+                <span class="Selection"><input type="checkbox" v-model="app.selected" /></span>
+                <span class="Source">({{app.source.name.charAt(0)}})</span>
+                <span class="Name">{{app.name}}</span>
+            </label>
+            <div class="col-sm-2">
+                ({{app.state}})
+            </div>
+            <div class="col-sm-4">
+                <ul class="Actions list-inline">
+                    <li v-for="(link, actionIndex) in [
+                        {title:'Bindings', action:showEnv},
+                        {title:'Routes', action:showEnv},
+                        {title:'Environment variables', action:showEnv},
+                        {title:'Logs', action:showEnv}
+                    ]">
+                        <span v-if="app.selected || !someSelected"
+                              :class="{'focused': someSelected && actionFocused == actionIndex}"
+                              @mouseenter="actionFocused = actionIndex" @mouseleave="actionFocused = -1">
+                            <a class="btn" @click="link.action(app)">{{link.title}}</a>
+                        </span>
+                        <span v-else>
+                            <a class="btn disabled">{{link.title}}</a>
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    </ul>
 </div>
 </template>
 <style>
 .App {
-	border-top: 1px dotted gray;
-	padding: 0.5em 1em;
-	line-height: 2em;
+    border-top: 1px dotted gray;
+    padding: 0.5em 1em;
+    line-height: 2em;
 }
 .App:last-child {
-	border-bottom: 1px dotted gray;
+    border-bottom: 1px dotted gray;
 }
 .App:not(.selected) label {
-	font-weight: normal;
+    font-weight: normal;
 }
 .App .Name {
-	margin-left: 0.5em;
+    margin-left: 0.5em;
 }
 .App .Source {
-	font-family: Consolas;
-	margin-left: 1em;
+    font-family: Consolas;
+    margin-left: 1em;
 }
 .App .Actions .focused a.btn {
-	text-decoration: underline;
-	color: black;
+    text-decoration: underline;
+    color: black;
 }
 </style>
 <script type="text/javascript">
 
 Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
-	data: function() { return {
-		actionFocused: -1
-	};},
-	computed: {
-	  	someSelected: function() {
-	  		return this.items.some(e=>e.selected);
-	  	}
-	},
-	methods: {
-		showEnv: function(app) {
-			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
+    data: function() { return {
+        actionFocused: -1
+    };},
+    computed: {
+        someSelected: function() {
+            return this.items.some(e=>e.selected);
+        }
+    },
+    methods: {
+        showEnv: function(app) {
+            var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
 
-			var route = 'envVars';
-			route += ':' + selected.map(toPath).join(";");
+            var route = 'envVars';
+            route += ':' + selected.map(toPath).join(";");
 
-			this.$emit('select', route);
-		}
-	}
+            this.$emit('select', route);
+        }
+    }
 });
 </script>
 
 <!-- component: app-env-page -->
 <template type="text/x-template" id="app-env-page-template">
 <div class="Page app-env-page">
-	<h3>Environment variables</h3>
+    <h3>Environment variables</h3>
 
-	<form class="app-env" v-for="(group, groupName) in groupedVars">
-		<div>
-			<h4 v-if="group.isTheOverlap">Overlapping everywhere</h4>
-			<h4 v-else>{{groupName}}</h4>
-		</div>
-		<ul class="list-group list-group-flush" style="max-width: 50em;">
-			<li class="EnvVar form-row row list-group-item" v-for="envVar in group">
-				<span class="Name col-xs-5 text-right">
-					<input type="text" v-model="envVar.name" class="form-control" />
-				</span>
-				<span class="Value col-xs-5">
-					<input type="text" v-model="envVar.value" class="form-control" />
-				</span>
-				<span class="Actions col-xs-2">
-					<a class="btn" title="Remove"><i class="fa fa-minus"></i></a>
-					<template v-if="group.isTheOverlap">
-						<a class="btn" title="Ungroup"><b>&#8623;</b></a>
-					</template>
-				</span>
-			</li>
-			<li class="add-row row list-group-item">
-				<div class="col-xs-2 col-xs-offset-10">
-					<a class="btn" title="Add"><i class="fa fa-plus"></i></a>
-				</div>
-			</li>
-		</ul>
-	</form>
+    <form class="app-env" v-for="(group, groupName) in groupedVars">
+        <div>
+            <h4 v-if="group.isTheOverlap">Overlapping everywhere</h4>
+            <h4 v-else>{{groupName}}</h4>
+        </div>
+        <ul class="list-group list-group-flush" style="max-width: 50em;">
+            <li class="EnvVar form-row row list-group-item" v-for="envVar in group">
+                <span class="Name col-xs-5 text-right">
+                    <input type="text" v-model="envVar.name" class="form-control" />
+                </span>
+                <span class="Value col-xs-5">
+                    <input type="text" v-model="envVar.value" class="form-control" />
+                </span>
+                <span class="Actions col-xs-2">
+                    <a class="btn" title="Remove"><i class="fa fa-minus"></i></a>
+                    <template v-if="group.isTheOverlap">
+                        <a class="btn" title="Ungroup"><b>&#8623;</b></a>
+                    </template>
+                </span>
+            </li>
+            <li class="add-row row list-group-item">
+                <div class="col-xs-2 col-xs-offset-10">
+                    <a class="btn" title="Add"><i class="fa fa-plus"></i></a>
+                </div>
+            </li>
+        </ul>
+    </form>
 </div>
 </template>
 <style>
 .app-env-page h3 {
-	margin-bottom: 1.25em;
+    margin-bottom: 1.25em;
 }
 .app-env .list-unstyled li {
-	margin: 0.5em 0em;
+    margin: 0.5em 0em;
 }
 .app-env .add-row {
-	padding-top:0px;
-	padding-bottom:0px;
-	margin-bottom: -1.25em;
-	border-bottom-width: 0px;
+    padding-top:0px;
+    padding-bottom:0px;
+    margin-bottom: -1.25em;
+    border-bottom-width: 0px;
 }
 .app-env *[class*='col-'] { padding: 0px 5px; }
 </style>
 <script type="text/javascript">
 viewSelectors['envVars'] = function() {
-	return {
-		title: "Environment variables",
-		view: "app-env-page",
-		select: function(app) {
-			return Object.entries(app.env)
-				.map(function(entry) { return {"name": entry[0], "value": entry[1]}; });
-		}
-	};
+    return {
+        title: "Environment variables",
+        view: "app-env-page",
+        select: function(app) {
+            return Object.entries(app.env)
+                .map(function(entry) { return {"name": entry[0], "value": entry[1]}; });
+        }
+    };
 };
 Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"],
-	computed: {
-		itemsByApp: function() {
-			return groupBy(this.items, function(e) { return displayName(toPath(e.source)); });
-		},
-		groupedVars: function() {
-			var grouped = this.itemsByApp;
+    computed: {
+        itemsByApp: function() {
+            return groupBy(this.items, function(e) { return displayName(toPath(e.source)); });
+        },
+        groupedVars: function() {
+            var grouped = this.itemsByApp;
 
-			var overlapping;
-			if (Object.keys(grouped).length > 1) {
-				var eq = function(a,b) {
-					return a==b || (a.name==b.name && a.value==b.value);
-				};
+            var overlapping;
+            if (Object.keys(grouped).length > 1) {
+                var eq = function(a,b) {
+                    return a==b || (a.name==b.name && a.value==b.value);
+                };
 
-				overlapping = overlap(grouped, eq);
-				overlapping.isTheOverlap = true;
+                overlapping = overlap(grouped, eq);
+                overlapping.isTheOverlap = true;
 
-				for (var k in grouped) {
-					var group = grouped[k];
-					for (var i=0; i<group.length; i++) {
-						var item = group[i];
-						if (overlapping.some(function(e) {return eq(e,item);})) {
-							group.splice(i,1); i--;
-						}
-					}
-				}
-			}
+                for (var k in grouped) {
+                    var group = grouped[k];
+                    for (var i=0; i<group.length; i++) {
+                        var item = group[i];
+                        if (overlapping.some(function(e) {return eq(e,item);})) {
+                            group.splice(i,1); i--;
+                        }
+                    }
+                }
+            }
 
-			grouped = collapseNames(grouped, function(name){ return name.replace(/\s*\(.*\)/,""); })
+            grouped = collapseNames(grouped, function(name){ return name.replace(/\s*\(.*\)/,""); })
 
-			var sorted = {};
-			if (!!overlapping) sorted["overlapping"] = overlapping;
-			Object.keys(grouped).sort().forEach(function(key) {
-				sorted[key] = grouped[key];
-			});
+            var sorted = {};
+            if (!!overlapping) sorted["overlapping"] = overlapping;
+            Object.keys(grouped).sort().forEach(function(key) {
+                sorted[key] = grouped[key];
+            });
 
-			return sorted;
-		}
-	}
+            return sorted;
+        }
+    }
 });
 </script>
 
@@ -394,212 +394,212 @@ var app = new Vue({
   el: '#App',
   data: {
     connections: [
-	    {
-	    	url: "https://api.cloud.com/orgs/123456789/spaces/aa9876543210",
-	    	name: "dev eu",
-	    	user: "A123",
-	    	auth: "bearer aa123456789012345678901234567890",
-	    	apps: [
-	  			{name: "App A1", state: "running", env: {a:1, b:2}},
-	  			{name: "App A2", state: "stopped", env: {b:3, c:4}},
-	  			{name: "App A3", state: "running", env: {c:4, d:5}},
-	  			{name: "App X", state: "running", env: {c:4, d:5}}
-	    	]
-	    },
-	    {
-	    	url: "https://api.cloud.com/orgs/123456789/spaces/bb9876543210",
-	    	name: "test eu",
-	    	user: "A123",
-	    	auth: "bearer bb123456789012345678901234567890",
-	    	apps: [
-	  			{name: "App B1", state: "crashed", env: {A:1, B:2, C:3}},
-	  			{name: "App B2", state: "running", env: {B:2, C:4, A:1}},
-	  			{name: "App B3", state: "running", env: {C:4, D:5}},
-	  			{name: "App X", state: "running", env: {c:4, d:5}}
-	    	]
-	    }
+        {
+            url: "https://api.cloud.com/orgs/123456789/spaces/aa9876543210",
+            name: "dev eu",
+            user: "A123",
+            auth: "bearer aa123456789012345678901234567890",
+            apps: [
+                {name: "App A1", state: "running", env: {a:1, b:2}},
+                {name: "App A2", state: "stopped", env: {b:3, c:4}},
+                {name: "App A3", state: "running", env: {c:4, d:5}},
+                {name: "App X", state: "running", env: {c:4, d:5}}
+            ]
+        },
+        {
+            url: "https://api.cloud.com/orgs/123456789/spaces/bb9876543210",
+            name: "test eu",
+            user: "A123",
+            auth: "bearer bb123456789012345678901234567890",
+            apps: [
+                {name: "App B1", state: "crashed", env: {A:1, B:2, C:3}},
+                {name: "App B2", state: "running", env: {B:2, C:4, A:1}},
+                {name: "App B3", state: "running", env: {C:4, D:5}},
+                {name: "App X", state: "running", env: {c:4, d:5}}
+            ]
+        }
     ],
     focusedConnection: false,
-  	selectors: []
+    selectors: []
   },
   computed: {
-  	breadcrumbs: function() {
-  		var $this = this;
-  		return this.selectors.map(function(sel, i) {
-  			var text = sel.title;
+    breadcrumbs: function() {
+        var $this = this;
+        return this.selectors.map(function(sel, i) {
+            var text = sel.title;
 
-			var chosen = $this.stackedItems[i+1];
-			if (chosen) {
-				text += " (" + chosen.length + ")";
-			}
+            var chosen = $this.stackedItems[i+1];
+            if (chosen) {
+                text += " (" + chosen.length + ")";
+            }
 
-			var select = function() {
-				$this.selectors = $this.selectors.slice(0, i+1);
-			};
+            var select = function() {
+                $this.selectors = $this.selectors.slice(0, i+1);
+            };
 
-  			return {text: text, select: select};
-  		});
-  	},
-  	topCrumb: function() {
-  		return last(this.selectors);
-  	},
-  	stackedItems: function() {
-  		var selected = this.connections.slice();
-  		var stacked = [selected];
-  		for (var selector of this.selectors) {
-  			if (selector.filter) {
-  				selected = selected.filter(selector.filter);
-  				stacked[stacked.length-1] = selected;
-  			}
-  			selected = selected
-  				.map(function(source) {
-	  				var items = selector.select(source);
-	  				for (var item of items) {
-	  					item.source=source;
-	  				}
-	  				return items;
-	  			})
-	  			.reduce(function(a,b){return a.concat(b);}, []);
-			stacked.push(selected);
-  		}
-  		return stacked;
-  	},
-  	items: function() {
-  		return last(this.stackedItems);
-  	}
+            return {text: text, select: select};
+        });
+    },
+    topCrumb: function() {
+        return last(this.selectors);
+    },
+    stackedItems: function() {
+        var selected = this.connections.slice();
+        var stacked = [selected];
+        for (var selector of this.selectors) {
+            if (selector.filter) {
+                selected = selected.filter(selector.filter);
+                stacked[stacked.length-1] = selected;
+            }
+            selected = selected
+                .map(function(source) {
+                    var items = selector.select(source);
+                    for (var item of items) {
+                        item.source=source;
+                    }
+                    return items;
+                })
+                .reduce(function(a,b){return a.concat(b);}, []);
+            stacked.push(selected);
+        }
+        return stacked;
+    },
+    items: function() {
+        return last(this.stackedItems);
+    }
   },
   methods: {
-  	addConnection: function(proto) {
-  		var connection = Object.assign({}, proto, {auth: false});
-  		this.focusedConnection = connection;
+    addConnection: function(proto) {
+        var connection = Object.assign({}, proto, {auth: false});
+        this.focusedConnection = connection;
 
-  		var connections = this.connections;
-  		var i = (connections.indexOf(proto) + 1) || connections.length;
-		connections.splice(i, 0, connection);
+        var connections = this.connections;
+        var i = (connections.indexOf(proto) + 1) || connections.length;
+        connections.splice(i, 0, connection);
 
-  		connection.onCancel = function(c) {
-  			connections.splice(i, 1);
-  		};
-  	},
-  	reAuth: function(connection) {
-  		connection.relogging = true;
-  		connection.onCancel = (function(user){ return function(c){c.user=user}; })(connection.user);
-  		this.focusedConnection = connection;
-  	},
-  	removeConnection: function(connection) {
-  		this.connections.forEach(function(c){if(c.onCancel)c.onCancel(c)});
-  		var i = this.connections.indexOf(connection);
-  		if (i > -1) this.connections.splice(i, 1);
-  	},
-  	submitConnection: function() {
-  		//attempt auth
-  		delete this.focusedConnection.onCancel;
-  		this.focusedConnection = false;
-  	},
-  	unfocusConnection: function () {
-  		var c = this.focusedConnection;
-  		if (c && c.onCancel) {
-  			c.onCancel(c);
-  		}
-  		delete c.onCancel;
-  		this.focusedConnection = false
-  	},
+        connection.onCancel = function(c) {
+            connections.splice(i, 1);
+        };
+    },
+    reAuth: function(connection) {
+        connection.relogging = true;
+        connection.onCancel = (function(user){ return function(c){c.user=user}; })(connection.user);
+        this.focusedConnection = connection;
+    },
+    removeConnection: function(connection) {
+        this.connections.forEach(function(c){if(c.onCancel)c.onCancel(c)});
+        var i = this.connections.indexOf(connection);
+        if (i > -1) this.connections.splice(i, 1);
+    },
+    submitConnection: function() {
+        //attempt auth
+        delete this.focusedConnection.onCancel;
+        this.focusedConnection = false;
+    },
+    unfocusConnection: function () {
+        var c = this.focusedConnection;
+        if (c && c.onCancel) {
+            c.onCancel(c);
+        }
+        delete c.onCancel;
+        this.focusedConnection = false
+    },
 
-  	navigate: function(path) {
-  		this.selectors = this.selectorsFromPath(path);
-  	},
-  	selectorsFromPath: function(fullPath) {
-  		var filterFromPath = this.filterFromPath;
-  		var selectors = (fullPath||"").split('&')
-  			.map(function(path) {
-  				var parts = path.extract(/^(.*?)(?::(.*)|$)/);
+    navigate: function(path) {
+        this.selectors = this.selectorsFromPath(path);
+    },
+    selectorsFromPath: function(fullPath) {
+        var filterFromPath = this.filterFromPath;
+        var selectors = (fullPath||"").split('&')
+            .map(function(path) {
+                var parts = path.extract(/^(.*?)(?::(.*)|$)/);
 
-  				var selFactory = viewSelectors[parts[0]];
-  				if (!selFactory) return undefined;
-  				var sel = selFactory();
+                var selFactory = viewSelectors[parts[0]];
+                if (!selFactory) return undefined;
+                var sel = selFactory();
 
-  				if (parts[1]) {
-  					sel.filter = filterFromPath(parts[1]);
-  				}
+                if (parts[1]) {
+                    sel.filter = filterFromPath(parts[1]);
+                }
 
-  				return sel;
-  			})
-  			.filter(function(e){return !!e;});
-  		return selectors;
-  	},
-  	filterFromPath: function(path) {
-  		if (!path || !path.trim()) {
-  			return function() { return true; };
-  		}
+                return sel;
+            })
+            .filter(function(e){return !!e;});
+        return selectors;
+    },
+    filterFromPath: function(path) {
+        if (!path || !path.trim()) {
+            return function() { return true; };
+        }
 
-  		var conditions = path.split(";").map(this.conditionFromPath);
-  		return function(e) {
-  			for (var condition of conditions) {
-  				if (condition(e))
-  					return true;
-  			}
-  			return false;
-  		};
-  	},
-  	conditionFromPath: function(path) {
-  		if (!path || !path.trim()) {
-  			return function() { return true; };
-  		}
+        var conditions = path.split(";").map(this.conditionFromPath);
+        return function(e) {
+            for (var condition of conditions) {
+                if (condition(e))
+                    return true;
+            }
+            return false;
+        };
+    },
+    conditionFromPath: function(path) {
+        if (!path || !path.trim()) {
+            return function() { return true; };
+        }
 
-  		var acceptable = {};
+        var acceptable = {};
 
-  		var a = acceptable;
-  		var parts = path.split("/");
-  		for (var i=parts.length-1; i>=0; i--) {
-  			var names = parts[i];
-  			var b = (i==0)? true : {};
-  			names.split(/\s*,\s*/).forEach(function(name){
-  				a[name] = b;
-  			});
-  			a = b;
-  		}
+        var a = acceptable;
+        var parts = path.split("/");
+        for (var i=parts.length-1; i>=0; i--) {
+            var names = parts[i];
+            var b = (i==0)? true : {};
+            names.split(/\s*,\s*/).forEach(function(name){
+                a[name] = b;
+            });
+            a = b;
+        }
 
-  		return function(e) {
-  			var allowed = acceptable;
-  			do {
-	  			if (!e.name) return false;
-	  			allowed = allowed[e.name];
-	  			if (!allowed) return false;
-	  			e = e.source;
-	  		} while (typeof allowed == 'object');
-	  		return true;
-  		};
-  	},
+        return function(e) {
+            var allowed = acceptable;
+            do {
+                if (!e.name) return false;
+                allowed = allowed[e.name];
+                if (!allowed) return false;
+                e = e.source;
+            } while (typeof allowed == 'object');
+            return true;
+        };
+    },
 
-  	showApps: function() {
-  		this.selectors = [this.appSelector()];
-  	},
-  	appSelector: function() {
-  		return {
-			title: "Applications",
-			view: "apps-page",
-			select: function(connection) {
-				return connection.apps||[];
-			}
-		};
-  	},
-  	select: function(route) {
-  		window.location.hash += '&' + encodeURI(route);
-  	}
+    showApps: function() {
+        this.selectors = [this.appSelector()];
+    },
+    appSelector: function() {
+        return {
+            title: "Applications",
+            view: "apps-page",
+            select: function(connection) {
+                return connection.apps||[];
+            }
+        };
+    },
+    select: function(route) {
+        window.location.hash += '&' + encodeURI(route);
+    }
   },
   created: function() {
-  	viewSelectors['apps'] = this.appSelector;
+    viewSelectors['apps'] = this.appSelector;
 
-  	var navigate = this.navigate;
-  	var update = function() {
-  		navigate(
-  			decodeURI(window.location.hash)
-	  			.replace(/^#?(apps&)?/, 'apps&')
-		);
-  	};
+    var navigate = this.navigate;
+    var update = function() {
+        navigate(
+            decodeURI(window.location.hash)
+                .replace(/^#?(apps&)?/, 'apps&')
+        );
+    };
 
-  	update();
-  	window.onhashchange = update;
+    update();
+    window.onhashchange = update;
   }
 })
 </script>
