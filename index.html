@@ -340,7 +340,8 @@ viewSelectors['envVars'] = function() {
 Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"],
 	computed: {
 		itemsByApp: function() {
-			return groupBy(this.items, function(e) { return toPath(e.source); });
+			var displayName = this.displayName;
+			return groupBy(this.items, function(e) { return displayName(toPath(e.source)); });
 		},
 		groupedVars: function() {
 			var grouped = this.itemsByApp;
@@ -365,13 +366,21 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 				}
 			}
 
+			grouped = collapseNames(grouped, function(name){ return name.replace(/\s*\(.*\)/,""); })
+
 			var sorted = {};
 			if (!!overlapping) sorted["overlapping"] = overlapping;
 			Object.keys(grouped).sort().forEach(function(key) {
 				sorted[key] = grouped[key];
 			});
 
-			return collapseNames(sorted, basename);
+			return sorted;
+		}
+	},
+	methods: {
+		displayName: function(pathName) {
+			var parts = pathName.split("/");
+			return parts.length > 1? parts.pop() + " (" + parts.join("/") + ")" : pathName;
 		}
 	}
 });
@@ -387,7 +396,6 @@ var groupBy = function(arr, key) { return arr.reduce(function(r, x) { var k = ke
 var overlap = function(grouped, eq) { if (!eq) eq = function(a,b) {return a==b;}; var categories = Object.keys(grouped); if (!categories.length) return; var topCat = categories.shift(); var candidates = grouped[topCat].slice(); for (var cat of categories) { for (var i=0; i<candidates.length; i++) { var candidate = candidates[i]; if (!grouped[cat].some(function(e){return eq(e, candidate);})) { candidates.splice(i,1); i--; } } } return candidates; };
 var collapseNames = function(objMap, shorten) { var nicknames = {}; for (var name in objMap) { var nickname = shorten(name); (nicknames[nickname] || (nicknames[nickname] = [])).push(name); } for (var nickname in nicknames) { var names = nicknames[nickname]; if (names.length == 1) { var name = names[0]; var v = objMap[name]; objMap[nickname] = v; delete objMap[name]; } } return objMap; };
 var toPath = function(obj) { var path = ""; var o = obj; do { path = (o.name || ""+o) + "/" + path; o = o.source; } while (o); return path.replace(/\/$/, ''); };
-var basename = function(path){ return last(path.split("/"));};
 
 
 String.prototype.extract = function(regex, i) { var parts; this.replace(regex, function(){ parts = Array.prototype.slice.call(arguments, 1, -2);}); if (typeof i != 'undefined' && parts) { return parts[i]; } return parts; };
