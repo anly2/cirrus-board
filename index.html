@@ -133,10 +133,9 @@ header {
 			</li>
 		</ul>
 
-		<div v-if="topCrumb">
+		<template v-if="topCrumb">
 			<component :is="topCrumb.view" :items="items" @select="select"></component>
-		</div>
-		<span v-else>{{showApps()}}</span>
+		</template>
 
 	</main>
 </div>
@@ -266,12 +265,10 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 		showEnv: function(app) {
 			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
 
-			var selector = viewSelectors['envVars']();
-			selector.filter = (function(selectedNames) {
-				return function(app) { return selectedNames.includes(app.name); };
-			}(selected.map(function(app) { return app.name; })));
+			var route = 'envVars';
+			route += ':' + selected.map(toPath).join(";");
 
-			this.$emit('select', selector);
+			this.$emit('select', route);
 		}
 	}
 });
@@ -394,7 +391,7 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 var last = function(arr) {return arr && arr.length? arr[arr.length-1] : undefined;};
 var groupBy = function(arr, key) { return arr.reduce(function(r, x) { var k = key(x); (r[k] = r[k] || []).push(x); return r; }, {}) };
 var overlap = function(grouped, eq) { if (!eq) eq = function(a,b) {return a==b;}; var categories = Object.keys(grouped); if (!categories.length) return; var topCat = categories.shift(); var candidates = grouped[topCat].slice(); for (var cat of categories) { for (var i=0; i<candidates.length; i++) { var candidate = candidates[i]; if (!grouped[cat].some(function(e){return eq(e, candidate);})) { candidates.splice(i,1); i--; } } } return candidates; };
-var collapseNames = function(objMap, shorten) { var nicknames = {}; for (var name in objMap) { var nickname = shorten(name); (nicknames[nickname] || (nicknames[nickname] = [])).push(name); } for (var nickname in nicknames) { var names = nicknames[nickname]; if (names.length == 1) { var name = names[0]; var v = objMap[name]; objMap[nickname] = v; delete objMap[name]; } } return objMap; };
+var collapseNames = function(objMap, shorten) { var nicknames = {}; for (var name in objMap) { var nickname = shorten(name, objMap[name]); (nicknames[nickname] || (nicknames[nickname] = [])).push(name); } for (var nickname in nicknames) { var names = nicknames[nickname]; if (names.length == 1) { var name = names[0]; var v = objMap[name]; objMap[nickname] = v; delete objMap[name]; } } return objMap; };
 var toPath = function(obj) { var path = ""; var o = obj; do { path = (o.name || ""+o) + "/" + path; o = o.source; } while (o); return path.replace(/\/$/, ''); };
 
 
@@ -593,19 +590,21 @@ var app = new Vue({
 			}
 		};
   	},
-  	select: function(selector) {
-  		this.selectors.push(selector);
+  	select: function(route) {
+  		window.location.hash += '&' + encodeURI(route);
   	}
   },
   created: function() {
   	viewSelectors['apps'] = this.appSelector;
 
-  	var $this = this;
+  	var navigate = this.navigate;
   	var update = function() {
-	  	var f = window.location.hash;
-  		f = decodeURI(f).replace(/^#/, '');
-  		$this.navigate(f);
+  		navigate(
+  			decodeURI(window.location.hash)
+	  			.replace(/^#?(apps&)?/, 'apps&')
+		);
   	};
+
   	update();
   	window.onhashchange = update;
   }
