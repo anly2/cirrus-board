@@ -10,6 +10,8 @@
 </head>
 <body>
 
+<script type="text/javascript">viewSelectors = {};</script>
+
 <!-- App css side -->
 <style type="text/css">
 header {
@@ -250,16 +252,6 @@ document.addEventListener('keyup', function(e){
 }
 </style>
 <script type="text/javascript">
-var envVarSel = function() {
-	return {
-		title: "Environment variables",
-		view: "app-env-page",
-		select: function(app) {
-			return Object.entries(app.env)
-				.map(function(entry) { return {"name": entry[0], "value": entry[1]}; });
-		}
-	};
-};
 
 Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 	data: function() { return {
@@ -274,7 +266,7 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 		showEnv: function(app) {
 			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
 
-			var selector = envVarSel();
+			var selector = viewSelectors['envVars']();
 			selector.filter = (function(selectedNames) {
 				return function(app) { return selectedNames.includes(app.name); };
 			}(selected.map(function(app) { return app.name; })));
@@ -335,6 +327,16 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 .app-env *[class*='col-'] { padding: 0px 5px; }
 </style>
 <script type="text/javascript">
+viewSelectors['envVars'] = function() {
+	return {
+		title: "Environment variables",
+		view: "app-env-page",
+		select: function(app) {
+			return Object.entries(app.env)
+				.map(function(entry) { return {"name": entry[0], "value": entry[1]}; });
+		}
+	};
+};
 Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"],
 	computed: {
 		itemsByApp: function() {
@@ -510,21 +512,23 @@ var app = new Vue({
   	},
   	selectorsFromPath: function(fullPath) {
   		var filterFromPath = this.filterFromPath;
-  		var appS = this.appSelector;
-  		var s = (fullPath||"").split('&')
+  		var selectors = (fullPath||"").split('&')
   			.map(function(path) {
   				var parts = path.extract(/^(.*?)(?::(.*)|$)/);
-  				var name = parts[0];
-  				if (name == "apps") return appS();
-  				if (name != "envVars") return undefined;
-  				var sel = envVarSel();
-  				var filter = filterFromPath(parts[1]);
-  				if (filter) sel.filter = filter;
+
+  				var selFactory = viewSelectors[parts[0]];
+  				if (!selFactory) return undefined;
+  				var sel = selFactory();
+
+  				if (parts[1]) {
+  					sel.filter = filterFromPath(parts[1]);
+  				}
+
   				return sel;
   			})
   			.filter(function(e){return !!e;});
-		console.log(s);
-		return s;
+		console.log(selectors);
+  		return selectors;
   	},
   	filterFromPath: function(path) {
   		if (!path || !path.trim()) {
@@ -559,7 +563,6 @@ var app = new Vue({
   		}
 
   		return function(e) {
-  			console.log("filter", e, e.name);
   			var allowed = acceptable;
   			do {
 	  			if (!e.name) return false;
@@ -588,6 +591,8 @@ var app = new Vue({
   	}
   },
   created: function() {
+  	viewSelectors['apps'] = this.appSelector;
+
   	var $this = this;
   	var update = function() {
 	  	var f = window.location.hash;
