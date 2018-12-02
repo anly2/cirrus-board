@@ -260,10 +260,10 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 	  	}
 	},
 	//DEBUG ONLY
-	created: function() {
-		this.items.forEach(app => app.selected = true);
-		this.showEnv();
-	},
+	// created: function() {
+	// 	this.items.forEach(app => app.selected = true);
+	// 	this.showEnv();
+	// },
 	methods: {
 		showEnv: function(app) {
 			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
@@ -286,36 +286,54 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 
 <!-- component: app-env-page -->
 <template type="text/x-template" id="app-env-page-template">
-<div class="Page">
+<div class="Page app-env-page">
 	<h3>Environment variables</h3>
-	<div style="max-width: 40em;">
-		<table class="app-env table" v-for="(group, groupName) in groupedVars">
-			<thead>
-				<tr>
-					<th colspan="3">{{group.isTheOverlap? "Overlapping everywhere" : groupName}}</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr class="EnvVar" v-for="envVar in group">
-					<td class="Name"> <input type="text" v-model="envVar.name" class="form-control" /></td>
-					<td class="Value"> <input type="text" v-model="envVar.value" class="form-control" /> </td>
-					<td class="Actions">
+
+	<form class="">
+		<div class="app-env" v-for="(group, groupName) in groupedVars">
+			<div>
+				<h4 v-if="group.isTheOverlap">Overlapping everywhere</h4>
+				<h4 v-else>{{groupName}}</h4>
+			</div>
+			<ul class="list-group list-group-flush" style="max-width: 50em;">
+				<li class="EnvVar form-row row list-group-item" v-for="envVar in group">
+					<span class="Name col-xs-5 text-right">
+						<input type="text" v-model="envVar.name" class="form-control" />
+					</span>
+					<span class="Value col-xs-5">
+						<input type="text" v-model="envVar.value" class="form-control" />
+					</span>
+					<span class="Actions col-xs-2">
 						<a class="btn" title="Remove"><i class="fa fa-minus"></i></a>
 						<template v-if="group.isTheOverlap">
 							<a class="btn" title="Ungroup"><b>&#8623;</b></a>
 						</template>
-					</td>
-				</tr>
-			</tbody>
-			<tfoot>
-				<tr>
-					<td colspan=3>Add</td>
-				</tr>
-			</tfoot>
-		</table>
-	</div>
-</table>
+					</span>
+				</li>
+				<li class="add-row row list-group-item">
+					<div class="col-xs-2 col-xs-offset-10">
+						<a class="btn" title="Add"><i class="fa fa-plus"></i></a>
+					</div>
+				</li>
+			</ul>
+		</div>
+	</form>
+</div>
 </template>
+<style>
+.app-env-page h3 {
+	margin-bottom: 1.25em;
+}
+.app-env .list-unstyled li {
+	margin: 0.5em 0em;
+}
+.app-env .add-row {
+	padding-top:0px;
+	padding-bottom:0px;
+	margin-bottom: -1.25em;
+	border-bottom-width: 0px;
+}
+</style>
 <script type="text/javascript">
 Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"],
 	computed: {
