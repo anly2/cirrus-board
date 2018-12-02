@@ -290,34 +290,32 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 <div class="Page app-env-page">
 	<h3>Environment variables</h3>
 
-	<form class="">
-		<div class="app-env" v-for="(group, groupName) in groupedVars">
-			<div>
-				<h4 v-if="group.isTheOverlap">Overlapping everywhere</h4>
-				<h4 v-else>{{groupName}}</h4>
-			</div>
-			<ul class="list-group list-group-flush" style="max-width: 50em;">
-				<li class="EnvVar form-row row list-group-item" v-for="envVar in group">
-					<span class="Name col-xs-5 text-right">
-						<input type="text" v-model="envVar.name" class="form-control" />
-					</span>
-					<span class="Value col-xs-5">
-						<input type="text" v-model="envVar.value" class="form-control" />
-					</span>
-					<span class="Actions col-xs-2">
-						<a class="btn" title="Remove"><i class="fa fa-minus"></i></a>
-						<template v-if="group.isTheOverlap">
-							<a class="btn" title="Ungroup"><b>&#8623;</b></a>
-						</template>
-					</span>
-				</li>
-				<li class="add-row row list-group-item">
-					<div class="col-xs-2 col-xs-offset-10">
-						<a class="btn" title="Add"><i class="fa fa-plus"></i></a>
-					</div>
-				</li>
-			</ul>
+	<form class="app-env" v-for="(group, groupName) in groupedVars">
+		<div>
+			<h4 v-if="group.isTheOverlap">Overlapping everywhere</h4>
+			<h4 v-else>{{groupName}}</h4>
 		</div>
+		<ul class="list-group list-group-flush" style="max-width: 50em;">
+			<li class="EnvVar form-row row list-group-item" v-for="envVar in group">
+				<span class="Name col-xs-5 text-right">
+					<input type="text" v-model="envVar.name" class="form-control" />
+				</span>
+				<span class="Value col-xs-5">
+					<input type="text" v-model="envVar.value" class="form-control" />
+				</span>
+				<span class="Actions col-xs-2">
+					<a class="btn" title="Remove"><i class="fa fa-minus"></i></a>
+					<template v-if="group.isTheOverlap">
+						<a class="btn" title="Ungroup"><b>&#8623;</b></a>
+					</template>
+				</span>
+			</li>
+			<li class="add-row row list-group-item">
+				<div class="col-xs-2 col-xs-offset-10">
+					<a class="btn" title="Add"><i class="fa fa-plus"></i></a>
+				</div>
+			</li>
+		</ul>
 	</form>
 </div>
 </template>
@@ -368,7 +366,7 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 			var sorted = {};
 			if (!!overlapping) sorted["overlapping"] = overlapping;
 			Object.keys(grouped).sort().forEach(function(key) {
-			  sorted[key] = grouped[key];
+				sorted[key] = grouped[key];
 			});
 
 			return collapseNames(sorted, basename);
@@ -385,12 +383,12 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 var last = function(arr) {return arr && arr.length? arr[arr.length-1] : undefined;};
 var groupBy = function(arr, key) { return arr.reduce(function(r, x) { var k = key(x); (r[k] = r[k] || []).push(x); return r; }, {}) };
 var overlap = function(grouped, eq) { if (!eq) eq = function(a,b) {return a==b;}; var categories = Object.keys(grouped); if (!categories.length) return; var topCat = categories.shift(); var candidates = grouped[topCat].slice(); for (var cat of categories) { for (var i=0; i<candidates.length; i++) { var candidate = candidates[i]; if (!grouped[cat].some(function(e){return eq(e, candidate);})) { candidates.splice(i,1); i--; } } } return candidates; };
-var collapseNames = function(objMap, shorten) { var nicknames = {}; for (var name in objMap) { var nickname = shorten(name); (nicknames[nickname] || (nicknames[nickname] = [])).push(name); } for (var nickname in nicknames) { var nickname = shorten(name); var names = nicknames[nickname]; if (names.length == 1) { var name = names[0]; var v = objMap[name]; objMap[nickname] = v; delete objMap[name]; } } return objMap; };
+var collapseNames = function(objMap, shorten) { var nicknames = {}; for (var name in objMap) { var nickname = shorten(name); (nicknames[nickname] || (nicknames[nickname] = [])).push(name); } for (var nickname in nicknames) { var names = nicknames[nickname]; if (names.length == 1) { var name = names[0]; var v = objMap[name]; objMap[nickname] = v; delete objMap[name]; } } return objMap; };
 var toPath = function(obj) { var path = ""; var o = obj; do { path = (o.name || ""+o) + "/" + path; o = o.source; } while (o); return path.replace(/\/$/, ''); };
 var basename = function(path){ return last(path.split("/"));};
 
-String.prototype.extract = function(regex, i) { var parts; this.replace(regex, function(){ parts = Array.prototype.slice.call(arguments, 1, -2);}); if (typeof i != 'undefined' && parts) { return parts[i]; } return parts; };
 
+String.prototype.extract = function(regex, i) { var parts; this.replace(regex, function(){ parts = Array.prototype.slice.call(arguments, 1, -2);}); if (typeof i != 'undefined' && parts) { return parts[i]; } return parts; };
 
 var app = new Vue({
   el: '#App',
