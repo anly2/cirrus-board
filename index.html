@@ -260,10 +260,12 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 	  	}
 	},
 	//DEBUG ONLY
-	// created: function() {
-	// 	this.items.forEach(app => app.selected = true);
-	// 	this.showEnv();
-	// },
+	created: function() {
+		// this.items.forEach(app => app.selected = true);
+		this.items[1].selected = true;
+		this.items[2].selected = true;
+		this.showEnv();
+	},
 	methods: {
 		showEnv: function(app) {
 			var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
@@ -346,11 +348,25 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 		groupedVars: function() {
 			var grouped = this.itemsByApp;
 
-			var overlap = this.overlapping;
-			overlap.isTheOverlap = true;
+			var eq = function(a,b) {
+				return a==b || (a.name==b.name && a.value==b.value);
+			};
+
+			var o = overlap(grouped, eq);
+			o.isTheOverlap = true;
+
+			for (var k in grouped) {
+				var group = grouped[k];
+				for (var i=0; i<group.length; i++) {
+					var item = group[i];
+					if (o.some(function(e) {return eq(e,item);})) {
+						group.splice(i,1); i--;
+					}
+				}
+			}
 
 			var sorted = {};
-			sorted["overlapping"] = overlap;
+			sorted["overlapping"] = o;
 			Object.keys(grouped).sort().forEach(function(key) {
 			  sorted[key] = grouped[key];
 			});
@@ -368,6 +384,23 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 <script type="text/javascript">
 var last = function(arr) {return arr && arr.length? arr[arr.length-1] : undefined;};
 var groupBy = function(arr, key) { return arr.reduce(function(r, x) { var k = key(x); (r[k] = r[k] || []).push(x); return r; }, {}) };
+var overlap = function(grouped, eq) {
+	if (!eq) eq = function(a,b) {return a==b;};
+	var categories = Object.keys(grouped);
+	if (!categories.length) return;
+	var topCat = categories.shift();
+	var candidates = grouped[topCat].slice();
+	for (var cat of categories) {
+		for (var i=0; i<candidates.length; i++) {
+			var candidate = candidates[i]
+			if (!grouped[cat].some(function(e){return eq(e, candidate);})) {
+				candidates.splice(i,1); i--;
+			}
+		}
+	}
+	return candidates;
+}
+
 
 var app = new Vue({
   el: '#App',
