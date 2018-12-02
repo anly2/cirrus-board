@@ -348,25 +348,31 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 		groupedVars: function() {
 			var grouped = this.itemsByApp;
 
-			var eq = function(a,b) {
-				return a==b || (a.name==b.name && a.value==b.value);
-			};
+			var o;
+			if (Object.keys(grouped).length > 1) {
+				var eq = function(a,b) {
+					return a==b || (a.name==b.name && a.value==b.value);
+				};
 
-			var o = overlap(grouped, eq);
-			o.isTheOverlap = true;
+				o = overlap(grouped, eq);
+			}
 
-			for (var k in grouped) {
-				var group = grouped[k];
-				for (var i=0; i<group.length; i++) {
-					var item = group[i];
-					if (o.some(function(e) {return eq(e,item);})) {
-						group.splice(i,1); i--;
+			if (!!o) {
+				o.isTheOverlap = true;
+
+				for (var k in grouped) {
+					var group = grouped[k];
+					for (var i=0; i<group.length; i++) {
+						var item = group[i];
+						if (o.some(function(e) {return eq(e,item);})) {
+							group.splice(i,1); i--;
+						}
 					}
 				}
 			}
 
 			var sorted = {};
-			sorted["overlapping"] = o;
+			if (!!o) sorted["overlapping"] = o;
 			Object.keys(grouped).sort().forEach(function(key) {
 			  sorted[key] = grouped[key];
 			});
@@ -587,11 +593,14 @@ var app = new Vue({
   	}
   },
   created: function() {
-  	var f = window.location.hash;
-  	if (f) {
+  	var $this = this;
+  	var update = function() {
+	  	var f = window.location.hash;
   		f = decodeURI(f).replace(/^#/, '');
-  		this.navigate(f);
-  	}
+  		$this.navigate(f);
+  	};
+  	update();
+  	window.onhashchange = update;
   }
 })
 </script>
