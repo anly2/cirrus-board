@@ -264,11 +264,7 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
     methods: {
         showEnv: function(app) {
             var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
-
-            var route = 'envVars';
-            route += ':' + selected.map(Naming.toPath).join(";");
-
-            this.$emit('select', route);
+            Navigation.navigate('envVars', selected);
         }
     }
 });
@@ -329,8 +325,7 @@ viewSelectors['envVars'] = function() {
         title: "Environment variables",
         view: "app-env-page",
         select: function(app) {
-            return Object.entries(app.env)
-                .map(function(entry) { return {"name": entry[0], "value": entry[1]}; });
+            return Object.entries(app.env).map(entry=>({"name": entry[0], "value": entry[1]}));
         }
     };
 };
@@ -355,6 +350,13 @@ var last = function(arr) {return arr && arr.length? arr[arr.length-1] : undefine
 String.prototype.extract = function(regex, i) { var parts; this.replace(regex, function(){ parts = Array.prototype.slice.call(arguments, 1, -2);}); if (typeof i != 'undefined' && parts) { return parts[i]; } return parts; };
 
 class Navigation {
+    static navigate(route, selected, append) {
+        if (!route) throw new Error("No route to navigate to");
+        if (selected && selected.map) {
+            route += ':' + selected.map(Naming.toPath).join(";");
+        }
+        return window.location.hash = (append? window.location.hash + "&" : "") + route;
+    }
     static selectorsFromPath(fullPath) {
         var selectors = (fullPath||"").split('&')
             .map((path) => {
@@ -603,14 +605,10 @@ var app = new Vue({
         this.focusedConnection = false
     },
 
-    navigate: function(path) {
+    route: function(path) {
         this.selectors = Navigation.selectorsFromPath(path);
     },
     
-
-    showApps: function() {
-        this.selectors = [this.appSelector()];
-    },
     appSelector: function() {
         return {
             title: "Applications",
@@ -627,13 +625,9 @@ var app = new Vue({
   created: function() {
     viewSelectors['apps'] = this.appSelector;
 
-    var navigate = this.navigate;
-    var update = function() {
-        navigate(
+    var update = () => this.route(
             decodeURI(window.location.hash)
-                .replace(/^#?(apps&)?/, 'apps&')
-        );
-    };
+                .replace(/^#?(apps&)?/, 'apps&'));
 
     update();
     window.onhashchange = update;
