@@ -390,6 +390,70 @@ var displayName = function(pathName, s,e,d) { if (!d) d = "/"; if (!s) s = " (";
 
 String.prototype.extract = function(regex, i) { var parts; this.replace(regex, function(){ parts = Array.prototype.slice.call(arguments, 1, -2);}); if (typeof i != 'undefined' && parts) { return parts[i]; } return parts; };
 
+class Navigation {
+    static selectorsFromPath(fullPath) {
+        var selectors = (fullPath||"").split('&')
+            .map((path) => {
+                var parts = path.extract(/^(.*?)(?::(.*)|$)/);
+
+                var selFactory = viewSelectors[parts[0]];
+                if (!selFactory) return undefined;
+                var sel = selFactory();
+
+                if (parts[1]) {
+                    sel.filter = this.filterFromPath(parts[1]);
+                }
+
+                return sel;
+            })
+            .filter(function(e){return !!e;});
+        return selectors;
+    }
+    static filterFromPath(path) {
+        if (!path || !path.trim()) {
+            return function() { return true; };
+        }
+
+        var conditions = path.split(";").map(this.conditionFromPath);
+        return function(e) {
+            for (var condition of conditions) {
+                if (condition(e))
+                    return true;
+            }
+            return false;
+        };
+    }
+    static conditionFromPath(path) {
+        if (!path || !path.trim()) {
+            return function() { return true; };
+        }
+
+        var acceptable = {};
+
+        var a = acceptable;
+        var parts = path.split("/");
+        for (var i=parts.length-1; i>=0; i--) {
+            var names = parts[i];
+            var b = (i==0)? true : {};
+            names.split(/\s*,\s*/).forEach(function(name){
+                a[name] = b;
+            });
+            a = b;
+        }
+
+        return function(e) {
+            var allowed = acceptable;
+            do {
+                if (!e.name) return false;
+                allowed = allowed[e.name];
+                if (!allowed) return false;
+                e = e.source;
+            } while (typeof allowed == 'object');
+            return true;
+        };
+    }
+};
+
 var app = new Vue({
   el: '#App',
   data: {
@@ -506,70 +570,9 @@ var app = new Vue({
     },
 
     navigate: function(path) {
-        this.selectors = this.selectorsFromPath(path);
+        this.selectors = Navigation.selectorsFromPath(path);
     },
-    selectorsFromPath: function(fullPath) {
-        var filterFromPath = this.filterFromPath;
-        var selectors = (fullPath||"").split('&')
-            .map(function(path) {
-                var parts = path.extract(/^(.*?)(?::(.*)|$)/);
-
-                var selFactory = viewSelectors[parts[0]];
-                if (!selFactory) return undefined;
-                var sel = selFactory();
-
-                if (parts[1]) {
-                    sel.filter = filterFromPath(parts[1]);
-                }
-
-                return sel;
-            })
-            .filter(function(e){return !!e;});
-        return selectors;
-    },
-    filterFromPath: function(path) {
-        if (!path || !path.trim()) {
-            return function() { return true; };
-        }
-
-        var conditions = path.split(";").map(this.conditionFromPath);
-        return function(e) {
-            for (var condition of conditions) {
-                if (condition(e))
-                    return true;
-            }
-            return false;
-        };
-    },
-    conditionFromPath: function(path) {
-        if (!path || !path.trim()) {
-            return function() { return true; };
-        }
-
-        var acceptable = {};
-
-        var a = acceptable;
-        var parts = path.split("/");
-        for (var i=parts.length-1; i>=0; i--) {
-            var names = parts[i];
-            var b = (i==0)? true : {};
-            names.split(/\s*,\s*/).forEach(function(name){
-                a[name] = b;
-            });
-            a = b;
-        }
-
-        return function(e) {
-            var allowed = acceptable;
-            do {
-                if (!e.name) return false;
-                allowed = allowed[e.name];
-                if (!allowed) return false;
-                e = e.source;
-            } while (typeof allowed == 'object');
-            return true;
-        };
-    },
+    
 
     showApps: function() {
         this.selectors = [this.appSelector()];
