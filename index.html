@@ -472,13 +472,13 @@ class Grouping {
 
         var grouped = this.groupBy(items, key);
 
-        var overlapping;
         if (Object.keys(grouped).length > 1) {
-            overlapping = this.takeOverlap(grouped, eq);
-            withOverlap(overlapping, grouped);
+            var overlap = this.takeOverlap(grouped, eq);
+            withOverlap(overlap, grouped);
+            return sortAll(grouped);
         }
 
-        return sortAll(grouped);
+        return grouped;
     }
     static sortKeys(grouped, compare, onto) {
         var sorted = onto||{};
