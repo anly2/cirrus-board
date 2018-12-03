@@ -134,7 +134,7 @@ header {
         </ul>
 
         <template v-if="topCrumb">
-            <component :is="topCrumb.view" :items="items" @select="select"></component>
+            <component :is="topCrumb.view" :items="items"></component>
         </template>
 
     </main>
@@ -617,9 +617,6 @@ var app = new Vue({
                 return connection.apps||[];
             }
         };
-    },
-    select: function(route) {
-        window.location.hash += '&' + encodeURI(route);
     }
   },
   created: function() {
