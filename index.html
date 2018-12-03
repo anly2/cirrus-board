@@ -336,42 +336,12 @@ viewSelectors['envVars'] = function() {
 };
 Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"],
     computed: {
-        itemsByApp: function() {
-            return groupBy(this.items, function(e) { return displayName(toPath(e.source)); });
-        },
-        groupedVars: function() {
-            var grouped = this.itemsByApp;
-
-            var overlapping;
-            if (Object.keys(grouped).length > 1) {
-                var eq = function(a,b) {
-                    return a==b || (a.name==b.name && a.value==b.value);
-                };
-
-                overlapping = overlap(grouped, eq);
-                overlapping.isTheOverlap = true;
-
-                for (var k in grouped) {
-                    var group = grouped[k];
-                    for (var i=0; i<group.length; i++) {
-                        var item = group[i];
-                        if (overlapping.some(function(e) {return eq(e,item);})) {
-                            group.splice(i,1); i--;
-                        }
-                    }
-                }
-            }
-
-            grouped = collapseNames(grouped, function(name){ return name.replace(/\s*\(.*\)/,""); })
-
-            var sorted = {};
-            if (!!overlapping) sorted["overlapping"] = overlapping;
-            Object.keys(grouped).sort().forEach(function(key) {
-                sorted[key] = grouped[key];
-            });
-
-            return sorted;
-        }
+        groupedVars: (function() {
+            var eq = (a,b) => (a.name==b.name && a.value==b.value);
+            return function() {
+                return Grouping.groupWithOverlap(this.items, eq);
+            };
+        }())
     }
 });
 </script>
@@ -382,8 +352,6 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
 <!-- App vue.js side -->
 <script type="text/javascript">
 var last = function(arr) {return arr && arr.length? arr[arr.length-1] : undefined;};
-var groupBy = function(arr, key) { return arr.reduce(function(r, x) { var k = key(x); (r[k] = r[k] || []).push(x); return r; }, {}) };
-var overlap = function(grouped, eq) { if (!eq) eq = function(a,b) {return a==b;}; var categories = Object.keys(grouped); if (!categories.length) return; var topCat = categories.shift(); var candidates = grouped[topCat].slice(); for (var cat of categories) { for (var i=0; i<candidates.length; i++) { var candidate = candidates[i]; if (!grouped[cat].some(function(e){return eq(e, candidate);})) { candidates.splice(i,1); i--; } } } return candidates; };
 var collapseNames = function(objMap, shorten) { var nicknames = {}; for (var name in objMap) { var nickname = shorten(name, objMap[name]); (nicknames[nickname] || (nicknames[nickname] = [])).push(name); } for (var nickname in nicknames) { var names = nicknames[nickname]; if (names.length == 1) { var name = names[0]; var v = objMap[name]; objMap[nickname] = v; delete objMap[name]; } } return objMap; };
 var toPath = function(obj) { var path = ""; var o = obj; do { path = (o.name || ""+o) + "/" + path; o = o.source; } while (o); return path.replace(/\/$/, ''); };
 var displayName = function(pathName, s,e,d) { if (!d) d = "/"; if (!s) s = " ("; if (!e) e = ")"; var parts = pathName.split(d); return parts.length > 1? parts.pop() + s + parts.join(d) + e : pathName; }
@@ -453,6 +421,71 @@ class Navigation {
         };
     }
 };
+
+class Grouping {
+    static groupBy(arr, key) { return arr.reduce(function(r, x) { var k = key(x); (r[k] = r[k] || []).push(x); return r; }, {}) };
+    static overlap(grouped, eq) { if (!eq) eq = function(a,b) {return a==b;}; var categories = Object.keys(grouped); if (!categories.length) return; var topCat = categories.shift(); var candidates = grouped[topCat].slice(); for (var cat of categories) { for (var i=0; i<candidates.length; i++) { var candidate = candidates[i]; if (!grouped[cat].some(function(e){return eq(e, candidate);})) { candidates.splice(i,1); i--; } } } return candidates; };
+    static takeOverlap(grouped, eq) {
+        var overlapping = this.overlap(grouped, eq);
+
+        for (var k in grouped) {
+            var group = grouped[k];
+            for (var i=0; i<group.length; i++) {
+                var item = group[i];
+                if (overlapping.some(e=>eq(e,item))) {
+                    group.splice(i,1); i--;
+                }
+            }
+        }
+
+        return overlapping;
+    }
+    static groupWithOverlap(items, eq, key, withOverlap, sortAll) {
+        if (!eq) eq = (a,b) => a==b;
+        if (!key) key = e => displayName(toPath(e.source));
+        if (!withOverlap) withOverlap = (o,g) => {o.isTheOverlap = true; g.overlap = o;};
+        if (!sortAll) sortAll = (g) => this.sortKeys(Naming.shortenNames(g), undefined, {overlap: g.overlap});
+
+        var grouped = this.groupBy(items, key);
+
+        var overlapping;
+        if (Object.keys(grouped).length > 1) {
+            overlapping = this.takeOverlap(grouped, eq);
+            withOverlap(overlapping, grouped);
+        }
+
+        return sortAll(grouped);
+    }
+    static sortKeys(grouped, compare, onto) {
+        var sorted = onto||{};
+        Object.keys(grouped).sort(compare).forEach(key => sorted[key] = grouped[key]);
+        return sorted;
+    }
+}
+
+class Naming {
+    static shortenNames(objMap, shorten) {
+        if (!shorten) shorten = this.shortenDisplayName;
+        var nicknames = {};
+        for (var name in objMap) {
+            var nickname = shorten(name, objMap[name])||name;
+            (nicknames[nickname] || (nicknames[nickname] = [])).push(name);
+        }
+        for (var nickname in nicknames) {
+            var names = nicknames[nickname];
+            if (names.length == 1) {
+                var name = names[0];
+                var v = objMap[name];
+                delete objMap[name];
+                objMap[nickname] = v;
+            }
+        }
+        return objMap;
+    }
+    static shortenDisplayName(name) {
+        return name.replace(/\s*\(.*\)/,"");
+    }
+}
 
 var app = new Vue({
   el: '#App',
