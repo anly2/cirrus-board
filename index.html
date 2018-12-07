@@ -198,7 +198,7 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
                     return r.text();
                 })
                 .then(t => {
-                    var d = MockData.connections.filter(mc => mc.name == c.name);;
+                    var d = MockData.connections.filter(mc => mc.name == c.name);
                     c.apps = d? d[0].apps : [];
                     this.$emit("update:items", this.connections.slice());
                 })
@@ -274,11 +274,11 @@ document.addEventListener('keyup', function(e){
 <div class="Page">
     <h3>Applications</h3>
     <ul class="apps list-unstyled">
-        <li v-for="(app, index) in items" class="App row" :class="{'selected': app.selected}">
+        <li v-for="(app, index) in apps" class="App row" :class="{'selected': app.selected}">
             <label class="col-sm-6">
                 <span class="Selection"><input type="checkbox" v-model="app.selected" /></span>
-                <span class="Source">({{app.source.name.charAt(0)}})</span>
                 <span class="Name">{{app.name}}</span>
+                <span class="Source">({{sourcePath(app)}})</span>
             </label>
             <div class="col-sm-2">
                 ({{app.state}})
@@ -336,11 +336,17 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
         actionFocused: -1
     };},
     computed: {
+        apps: function() {
+            return (this.items||[]).sort((a,b) => a.name < b.name? -1 : a.name == b.name? 0 : 1);
+        },
         someSelected: function() {
             return this.items.some(e=>e.selected);
         }
     },
     methods: {
+        sourcePath: function(app) {
+            return Naming.toPath(app.source);
+        },
         showEnv: function(app) {
             var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
             Navigation.navigate('envVars', selected);
