@@ -189,11 +189,22 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
         },
         submitConnection: function() {
             var c = this.focusedConnection;
-            c.auth = "bearer " + c.user + (c.password||"").length;
-            c.apps = MockData.connections.filter(mc => mc.name == c.name)[0].apps;
-            delete c.onCancel;
 
-            this.$emit("update:items", this.connections.slice());
+            window.fetch(c.url)
+                .then(r => {
+                    if (!r.ok) throw new Error("Failed with call to " + c.url);
+
+                    c.auth = "bearer " + c.user + (c.password||"").length;
+                    return r.text();
+                })
+                .then(t => {
+                    var d = MockData.connections.filter(mc => mc.name == c.name);;
+                    c.apps = d? d[0].apps : [];
+                    this.$emit("update:items", this.connections.slice());
+                })
+                .catch(console.error);
+
+            delete c.onCancel;
             this.focusedConnection = false;
         },
         unfocusConnection: function () {
