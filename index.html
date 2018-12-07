@@ -18,6 +18,107 @@ header {
     margin-bottom: 1em;
 }
 
+.Actions a {
+    cursor: pointer;
+}
+
+.breadcrumbs {
+    font-size: 1.2em;
+}
+</style>
+
+
+<!-- App html side -->
+<div id="App">
+    <header>
+        <connections :items.sync="connections"></connections>
+    </header>
+
+    <main class="container-fluid" v-if="connections.length > 0">
+        <ul class="breadcrumbs list-inline" v-if="breadcrumbs.length > 1">
+            <li v-for="(crumb, index) in breadcrumbs">
+                &rsaquo;&nbsp;
+                <span v-if="index < breadcrumbs.length-1">
+                    <a @click="crumb.select">{{crumb.text}}</a>
+                </span>
+                <b v-else>{{crumb.text}}</b>
+            </li>
+        </ul>
+
+        <template v-if="topCrumb">
+            <component :is="topCrumb.view" :items="items"></component>
+        </template>
+    </main>
+</div>
+
+<!-- component: connections -->
+<template type="text/x-template" id="connections-template">
+<div class="connections" :class="{'empty container-fluid':!connections.length}">
+    <h3 :class="{'hidden-md hidden-lg':connections.length > 0}">Connections</h3>
+    <ul class="list-unstyled">
+        <li v-for="connection in connections">
+            <div class="Connection" :class="{focused: connection==focusedConnection}">
+                <div class="row">
+                    <div class="Name col-xs-6">{{connection.name}}</div>
+                    <div class="User col-xs-3">
+                        <span v-if="connection.auth">as: {{connection.user}}</span>
+                        <span v-else><i>not logged in</i></span>
+                    </div>
+                    <div class="Actions col-xs-3 text-right">
+                        <ul class="list-inline">
+                            <li>
+                                <a @click="addConnection(connection)" title="Duplicate">
+                                    <i class="fa fa-clone"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <a @click="reAuth(connection)" title="Logout">
+                                    <i class="fa fa-user-times"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <a @click="removeConnection(connection)" title="Terminate">
+                                    <i class="fa fa-power-off"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </li>
+    </ul>
+    <a class="add-button" @click="addConnection()" @submit="alert('sub')">
+        <i class="fa fa-plus"></i>
+        <span :class="{'hidden-lg': connections.length>0}">Add connection</span>
+    </a>
+    <dialogue v-if="focusedConnection" @submit="submitConnection()" @cancel="unfocusConnection()">
+        <h3 slot="header">Connection</h3>
+        <form slot="body">
+          <div class="form-group row">
+            <label class="col-xs-2 col-form-label" for="focusedConnection_name">Name:</label>
+            <div class="col-xs-10">
+                <input type="text" v-model="focusedConnection.name" class="form-control" :readOnly="focusedConnection.relogging" id="focusedConnection_name" placeholder="Connection name">
+            </div>
+          </div>
+          <div v-if="!focusedConnection.auth||focusedConnection.relogging">
+              <div class="form-group row">
+                <label class="col-xs-2 col-form-label" for="focusedConnection_user">Username:</label>
+                <div class="col-xs-10">
+                    <input type="text" v-model="focusedConnection.user" class="form-control" id="focusedConnection_user" placeholder="Username">
+                </div>
+              </div>
+              <div class="form-group row">
+                <label class="col-xs-2 col-form-label" for="focusedConnection_password">Password:</label>
+                <div class="col-xs-10">
+                    <input type="password" class="form-control" id="focusedConnection_password" placeholder="Password">
+                </div>
+              </div>
+          </div>
+        </form>
+      </dialogue>
+</div>
+</template>
+<style>
 .Connection {
     font-size: 1.25em;
     padding: 0.25em 1em;
@@ -44,101 +145,58 @@ header {
 .connections:not(.empty) .add-button {
     margin-top: -1em;
 }
-
-.Actions a {
-    cursor: pointer;
-}
-
-.breadcrumbs {
-    font-size: 1.2em;
-}
 </style>
+<script type="text/javascript">
+Vue.component('connections', {template: '#connections-template', props:["items"],
+    data: function() { return {
+        focusedConnection: false
+    };},
+    computed: {
+        connections: function() {
+            this.$emit("update:items", this.items);
+            return this.items;
+        }
+    },
+    methods: {
+        addConnection: function(proto) {
+            var connection = Object.assign({}, proto, {auth: false});
+            this.focusedConnection = connection;
 
+            var connections = this.connections;
+            var i = (connections.indexOf(proto) + 1) || connections.length;
+            connections.splice(i, 0, connection);
 
-<!-- App html side -->
-<div id="App">
-    <header class="connections" :class="{'empty container-fluid':!connections.length}">
-        <h3 :class="{'hidden-md hidden-lg':connections.length > 0}">Connections</h3>
-        <ul class="list-unstyled">
-            <li v-for="connection in connections">
-                <div class="Connection" :class="{focused: connection==focusedConnection}">
-                    <div class="row">
-                        <div class="Name col-xs-6">{{connection.name}}</div>
-                        <div class="User col-xs-3">
-                            <span v-if="connection.auth">as: {{connection.user}}</span>
-                            <span v-else><i>not logged in</i></span>
-                        </div>
-                        <div class="Actions col-xs-3 text-right">
-                            <ul class="list-inline">
-                                <li>
-                                    <a @click="addConnection(connection)" title="Duplicate">
-                                        <i class="fa fa-clone"></i>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a @click="reAuth(connection)" title="Logout">
-                                        <i class="fa fa-user-times"></i>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a @click="removeConnection(connection)" title="Terminate">
-                                        <i class="fa fa-power-off"></i>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </li>
-        </ul>
-        <a class="add-button" @click="addConnection()" @submit="alert('sub')">
-            <i class="fa fa-plus"></i>
-            <span :class="{'hidden-lg': connections.length>0}">Add connection</span>
-        </a>
-        <dialogue v-if="focusedConnection" @submit="submitConnection()" @cancel="unfocusConnection()">
-            <h3 slot="header">Connection</h3>
-            <form slot="body">
-              <div class="form-group row">
-                <label class="col-xs-2 col-form-label" for="focusedConnection_name">Name:</label>
-                <div class="col-xs-10">
-                    <input type="text" v-model="focusedConnection.name" class="form-control" :readOnly="focusedConnection.relogging" id="focusedConnection_name" placeholder="Connection name">
-                </div>
-              </div>
-              <div v-if="!focusedConnection.auth||focusedConnection.relogging">
-                  <div class="form-group row">
-                    <label class="col-xs-2 col-form-label" for="focusedConnection_user">Username:</label>
-                    <div class="col-xs-10">
-                        <input type="text" v-model="focusedConnection.user" class="form-control" id="focusedConnection_user" placeholder="Username">
-                    </div>
-                  </div>
-                  <div class="form-group row">
-                    <label class="col-xs-2 col-form-label" for="focusedConnection_password">Password:</label>
-                    <div class="col-xs-10">
-                        <input type="password" class="form-control" id="focusedConnection_password" placeholder="Password">
-                    </div>
-                  </div>
-              </div>
-            </form>
-          </dialogue>
-    </header>
+            connection.onCancel = function(c) {
+                connections.splice(i, 1);
+            };
+        },
+        reAuth: function(connection) {
+            connection.relogging = true;
+            connection.onCancel = (function(user){ return function(c){c.user=user}; })(connection.user);
+            this.focusedConnection = connection;
+        },
+        removeConnection: function(connection) {
+            this.connections.forEach(function(c){if(c.onCancel)c.onCancel(c)});
+            var i = this.connections.indexOf(connection);
+            if (i > -1) this.connections.splice(i, 1);
+        },
+        submitConnection: function() {
+            /*TODO: attempt auth*/
+            delete this.focusedConnection.onCancel;
+            this.focusedConnection = false;
+        },
+        unfocusConnection: function () {
+            var c = this.focusedConnection;
+            if (c && c.onCancel) {
+                c.onCancel(c);
+            }
+            delete c.onCancel;
+            this.focusedConnection = false
+        }
+    }
+});
+</script>
 
-    <main class="container-fluid" v-if="connections.length > 0">
-        <ul class="breadcrumbs list-inline" v-if="breadcrumbs.length > 1">
-            <li v-for="(crumb, index) in breadcrumbs">
-                &rsaquo;&nbsp;
-                <span v-if="index < breadcrumbs.length-1">
-                    <a @click="crumb.select">{{crumb.text}}</a>
-                </span>
-                <b v-else>{{crumb.text}}</b>
-            </li>
-        </ul>
-
-        <template v-if="topCrumb">
-            <component :is="topCrumb.view" :items="items"></component>
-        </template>
-
-    </main>
-</div>
 
 <!-- component: dialogue -->
 <template type="text/x-template" id="dialogue-template">
@@ -251,7 +309,6 @@ document.addEventListener('keyup', function(e){
 }
 </style>
 <script type="text/javascript">
-
 Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
     data: function() { return {
         actionFocused: -1
@@ -519,7 +576,6 @@ var app = new Vue({
             ]
         }
     ],
-    focusedConnection: false,
     selectors: []
   },
   computed: {
@@ -569,42 +625,6 @@ var app = new Vue({
     }
   },
   methods: {
-    addConnection: function(proto) {
-        var connection = Object.assign({}, proto, {auth: false});
-        this.focusedConnection = connection;
-
-        var connections = this.connections;
-        var i = (connections.indexOf(proto) + 1) || connections.length;
-        connections.splice(i, 0, connection);
-
-        connection.onCancel = function(c) {
-            connections.splice(i, 1);
-        };
-    },
-    reAuth: function(connection) {
-        connection.relogging = true;
-        connection.onCancel = (function(user){ return function(c){c.user=user}; })(connection.user);
-        this.focusedConnection = connection;
-    },
-    removeConnection: function(connection) {
-        this.connections.forEach(function(c){if(c.onCancel)c.onCancel(c)});
-        var i = this.connections.indexOf(connection);
-        if (i > -1) this.connections.splice(i, 1);
-    },
-    submitConnection: function() {
-        //attempt auth
-        delete this.focusedConnection.onCancel;
-        this.focusedConnection = false;
-    },
-    unfocusConnection: function () {
-        var c = this.focusedConnection;
-        if (c && c.onCancel) {
-            c.onCancel(c);
-        }
-        delete c.onCancel;
-        this.focusedConnection = false
-    },
-
     route: function(path) {
         this.selectors = Navigation.selectorsFromPath(path);
     },
