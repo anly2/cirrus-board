@@ -101,6 +101,12 @@ header {
                 <input type="text" v-model="focusedConnection.name" class="form-control" :readOnly="focusedConnection.relogging" id="focusedConnection_name" placeholder="Connection name">
             </div>
           </div>
+          <div class="form-group row">
+            <label class="col-xs-2 col-form-label" for="focusedConnection_url">API URL:</label>
+            <div class="col-xs-10">
+                <input type="text" v-model="focusedConnection.url" class="form-control" :readOnly="focusedConnection.relogging" id="focusedConnection_url" placeholder="API URL">
+            </div>
+          </div>
           <div v-if="!focusedConnection.auth||focusedConnection.relogging">
               <div class="form-group row">
                 <label class="col-xs-2 col-form-label" for="focusedConnection_user">Username:</label>
