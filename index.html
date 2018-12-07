@@ -51,6 +51,7 @@ header {
     </main>
 </div>
 
+
 <!-- component: connections -->
 <template type="text/x-template" id="connections-template">
 <div class="connections" :class="{'empty container-fluid':!connections.length}">
@@ -153,8 +154,7 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
     };},
     computed: {
         connections: function() {
-            this.$emit("update:items", this.items);
-            return this.items;
+            return (this.items||[]).slice();
         }
     },
     methods: {
@@ -179,10 +179,15 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
             this.connections.forEach(function(c){if(c.onCancel)c.onCancel(c)});
             var i = this.connections.indexOf(connection);
             if (i > -1) this.connections.splice(i, 1);
+            this.$emit("update:items", this.connections.slice());
         },
         submitConnection: function() {
-            /*TODO: attempt auth*/
-            delete this.focusedConnection.onCancel;
+            var c = this.focusedConnection;
+            c.auth = "bearer " + c.user + (c.password||"").length;
+            c.apps = MockData.connections.filter(mc => mc.name == c.name)[0].apps;
+            delete c.onCancel;
+
+            this.$emit("update:items", this.connections.slice());
             this.focusedConnection = false;
         },
         unfocusConnection: function () {
@@ -546,10 +551,7 @@ class Grouping {
     }
 }
 
-
-var app = new Vue({
-  el: '#App',
-  data: {
+MockData = {
     connections: [
         {
             url: "https://api.cloud.com/orgs/123456789/spaces/aa9876543210",
@@ -575,7 +577,14 @@ var app = new Vue({
                 {name: "App X", state: "running", env: {c:4, d:5}}
             ]
         }
-    ],
+    ]
+}
+
+
+var app = new Vue({
+  el: '#App',
+  data: {
+    connections: [],
     selectors: []
   },
   computed: {
