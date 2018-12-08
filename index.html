@@ -378,7 +378,7 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
         },
         showEnv: function(app) {
             var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
-            Navigation.navigate('envVars', selected);
+            Navigation.navigate('envVars', selected, true);
         }
     }
 });
@@ -468,11 +468,12 @@ String.prototype.extract = function(regex, i) { var parts; this.replace(regex, f
 
 class Navigation {
     static navigate(route, selected, append) {
+        /* FIXME: Quite Broken atm */
         if (!route) throw new Error("No route to navigate to");
         if (selected && selected.map) {
-            route += ':' + selected.map(Naming.toPath).join(";");
+            route = ":" + selected.map(Naming.toPath).join(";") + "&" + route;
         }
-        return window.location.hash = (append? window.location.hash + "&" : "") + route;
+        return window.location.hash = (append? window.location.hash : '') + route;
     }
     static selectorsFromPath(fullPath) {
         var selectors = (fullPath||"").split('&')
@@ -631,7 +632,7 @@ var app = new Vue({
   computed: {
     breadcrumbs: function() {
         var $this = this;
-        return this.selectors.map(function(sel, i) {
+        return this.selectors.slice(1).map(function(sel, i) {
             var text = sel.title;
 
             var chosen = $this.stackedItems[i+1];
