@@ -636,9 +636,10 @@ var app = new Vue({
     breadcrumbs: function() {
         var $this = this;
         return this.selectors.slice(1).map(function(sel, i) {
+            i++;
             var text = sel.title;
 
-            var chosen = $this.stackedItems[i+1];
+            var chosen = $this.stackedItems[i];
             if (chosen) {
                 text += " (" + chosen.length + ")";
             }
@@ -656,7 +657,6 @@ var app = new Vue({
     stackedItems: function() {
         var selected = [undefined];
         var stacked = [];
-        console.log("Selecting");
         for (var selector of this.selectors) {
             var newitems = selected.map(function(source) {
                 var items = selector.select(source);
