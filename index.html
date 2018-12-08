@@ -241,7 +241,8 @@ viewSelectors['connections'] = function(fullPath, selectorName, qualifier) {
         view: 'connections',
         select: function() {
             return conns;
-        }
+        },
+        qualifier: qualifier
     };
 }
 </script>
@@ -482,12 +483,14 @@ class Navigation {
 
                 var selFactory = viewSelectors[parts[0]];
                 if (!selFactory) return undefined;
-                var sel = selFactory(fullPath, parts[0], parts[1]? parts[1] : undefined);
+                var sel = selFactory(fullPath, parts[0], parts[1]);
 
-                if (parts[1]) {
+                if (parts[1] && !sel.qualifier) {
                     sel.qualifier = parts[1];
-                    sel.targets = this.targetsFromPath(sel.qualifier);
-                    sel.filter = this.filterFromTargets(sel.targets);
+                    if (!sel.targets)
+                        sel.targets = this.targetsFromPath(sel.qualifier);
+                    if (!sel.filter)
+                        sel.filter = this.filterFromTargets(sel.targets);
                 }
 
                 return sel;
@@ -497,7 +500,7 @@ class Navigation {
     }
     static targetsFromPath(pathList) {
         var targets = {};
-        pathList.split(";").forEach(path => {
+        (pathList||"").split(";").forEach(path => {
             var a = targets;
             var parts = path.split("/");
             for (var i=parts.length-1; i>=0; i--) {
@@ -653,16 +656,18 @@ var app = new Vue({
     stackedItems: function() {
         var selected = [undefined];
         var stacked = [];
+        console.log("Selecting");
         for (var selector of this.selectors) {
-            selected = selected
-                .map(function(source) {
-                    var items = selector.select(source);
-                    for (var item of items) {
-                        item.source=source;
-                    }
-                    return items;
-                })
-                .reduce((a,b) => a.concat(b), []);
+            var newitems = selected.map(function(source) {
+                var items = selector.select(source);
+                for (var item of items) {
+                    item.source=source;
+                }
+                return items;
+            }).reduce((a,b) => a.concat(b), []);
+            if (selector.filter)
+                newitems = newitems.filter(selector.filter);
+            selected = newitems;
             stacked.push(selected);
         }
         return stacked;
