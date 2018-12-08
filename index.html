@@ -199,7 +199,7 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
                 })
                 .then(t => {
                     var d = MockData.connections.filter(mc => mc.name == c.name);
-                    c.apps = d? d[0].apps : [];
+                    c.apps = d&&d[0]? d[0].apps : [];
                     this.$emit("update:items", this.connections.slice());
                 })
                 .catch(console.error);
@@ -218,6 +218,34 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
     }
 });
 </script>
+<script type="text/javascript">
+viewSelectors['connections'] = function(fullPath, selectorName, qualifier) {
+    var conns = qualifier.split(/\s*;\s*/).map(connectionExpression => {
+        var p = connectionExpression.extract(/(?:(.*?)=)?(.*)/);
+        var c = {};
+        
+        c.name = p[0] || connectionExpression.replace(/(?:https?)?(?::\/\/)?([^\/]*).*/, "$1");
+
+        /*var savedConnection = localStoraget.getItem()*/
+
+        c.url = p[1];
+
+        var d = MockData.connections.filter(mc => mc.name == c.name);
+        c.apps = d&&d[0]? d[0].apps : [];
+
+        return c;
+    });
+    console.log("Initialized with connections:", conns);
+    return {
+        title: "Connections",
+        view: 'connections',
+        select: function() {
+            return conns;
+        }
+    };
+}
+</script>
+<!-- component; connections -->
 
 
 <!-- component: dialogue -->
@@ -267,6 +295,7 @@ document.addEventListener('keyup', function(e){
     if (e.keyCode==27) { var b = document.querySelector("#dialogue .dialogue-button-cancel"); if (b) b.click(); }
 });
 </script>
+<!-- component; dialogue -->
 
 
 <!-- component: apps-page -->
@@ -354,6 +383,8 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
     }
 });
 </script>
+<!-- component; apps-page -->
+
 
 <!-- component: app-env-page -->
 <template type="text/x-template" id="app-env-page-template">
@@ -425,6 +456,7 @@ Vue.component('app-env-page', {template: '#app-env-page-template', props:["items
     }
 });
 </script>
+<!-- component; app-env-page -->
 
 
 
@@ -449,51 +481,37 @@ class Navigation {
 
                 var selFactory = viewSelectors[parts[0]];
                 if (!selFactory) return undefined;
-                var sel = selFactory();
+                var sel = selFactory(fullPath, parts[0], parts[1]? parts[1] : undefined);
 
                 if (parts[1]) {
-                    sel.filter = this.filterFromPath(parts[1]);
+                    sel.qualifier = parts[1];
+                    sel.targets = this.targetsFromPath(sel.qualifier);
+                    sel.filter = this.filterFromTargets(sel.targets);
                 }
 
                 return sel;
             })
-            .filter(function(e){return !!e;});
+            .filter(e => e && e.select);
         return selectors;
     }
-    static filterFromPath(path) {
-        if (!path || !path.trim()) {
-            return function() { return true; };
-        }
-
-        var conditions = path.split(";").map(this.conditionFromPath);
-        return function(e) {
-            for (var condition of conditions) {
-                if (condition(e))
-                    return true;
+    static targetsFromPath(pathList) {
+        var targets = {};
+        pathList.split(";").forEach(path => {
+            var a = targets;
+            var parts = path.split("/");
+            for (var i=parts.length-1; i>=0; i--) {
+                var names = parts[i];
+                var b = (i==0)? true : {};
+                names.split(/\s*,\s*/).forEach(name => a[name] = b);
+                a = b;
             }
-            return false;
-        };
+        });
+        return targets;
     }
-    static conditionFromPath(path) {
-        if (!path || !path.trim()) {
-            return function() { return true; };
-        }
-
-        var acceptable = {};
-
-        var a = acceptable;
-        var parts = path.split("/");
-        for (var i=parts.length-1; i>=0; i--) {
-            var names = parts[i];
-            var b = (i==0)? true : {};
-            names.split(/\s*,\s*/).forEach(function(name){
-                a[name] = b;
-            });
-            a = b;
-        }
-
+    static filterFromTargets(targets) {
+        if (!targets) return e=>true;
         return function(e) {
-            var allowed = acceptable;
+            var allowed = targets;
             do {
                 if (!e.name) return false;
                 allowed = allowed[e.name];
@@ -632,13 +650,9 @@ var app = new Vue({
         return last(this.selectors);
     },
     stackedItems: function() {
-        var selected = this.connections.slice();
-        var stacked = [selected];
+        var selected = [undefined];
+        var stacked = [];
         for (var selector of this.selectors) {
-            if (selector.filter) {
-                selected = selected.filter(selector.filter);
-                stacked[stacked.length-1] = selected;
-            }
             selected = selected
                 .map(function(source) {
                     var items = selector.select(source);
@@ -647,7 +661,7 @@ var app = new Vue({
                     }
                     return items;
                 })
-                .reduce(function(a,b){return a.concat(b);}, []);
+                .reduce((a,b) => a.concat(b), []);
             stacked.push(selected);
         }
         return stacked;
@@ -659,6 +673,9 @@ var app = new Vue({
   methods: {
     route: function(path) {
         this.selectors = Navigation.selectorsFromPath(path);
+        if (this.selectors && this.selectors[0]) {
+            this.connections = this.selectors[0].select();
+        }
     },
     
     appSelector: function() {
@@ -675,8 +692,9 @@ var app = new Vue({
     viewSelectors['apps'] = this.appSelector;
 
     var update = () => this.route(
-            decodeURI(window.location.hash)
-                .replace(/^#?(apps&)?/, 'apps&'));
+        decodeURI(window.location.hash)
+            .replace(/^#/, '')
+    );
 
     update();
     window.onhashchange = update;
