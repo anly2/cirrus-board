@@ -499,20 +499,7 @@ Vue.component('app-env-page', (function() {
         },
         methods: {
             ungroup: function(envVar) {
-                for (var group of Object.values(this.groupedVars)) {
-                    if (group.isTheOverlap) {
-                        for (var i=0; i<group.length; i++) {
-                            if (eq(envVar, group[i])) {
-                                group.splice(i, 1); i--;
-                            }
-                        }
-                    }
-                    else {
-                        var j = 0;
-                        while (group[j] && group[j].name < envVar.name) j++;
-                        group.splice(j, 0, Object.assign({}, envVar, {source: group.source}));
-                    }
-                }
+                Grouping.ungroup(envVar, this.groupedVars, eq);
             }
         }
     }
@@ -705,6 +692,24 @@ class Grouping {
         var sorted = onto||{};
         Object.keys(grouped).sort(compare).forEach(key => sorted[key] = grouped[key]);
         return sorted;
+    }
+    static ungroup(item, grouped, eq) {
+        if (!eq) eq = (a,b) => a==b;
+
+        for (var group of Object.values(grouped)) {
+            if (group.isTheOverlap) {
+                for (var i=0; i<group.length; i++) {
+                    if (eq(item, group[i])) {
+                        group.splice(i, 1); i--;
+                    }
+                }
+            }
+            else {
+                var j = 0;
+                while (group[j] && group[j].name < item.name) j++;
+                group.splice(j, 0, Object.assign({}, item, {source: group.source}));
+            }
+        }
     }
 }
 
