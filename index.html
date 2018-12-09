@@ -438,7 +438,7 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
             <h4 v-else>{{groupName}}</h4>
         </div>
         <ul class="list-group list-group-flush" style="max-width: 50em;">
-            <li class="EnvVar form-row row list-group-item" v-for="envVar in group">
+            <li class="EnvVar form-row row list-group-item" v-for="envVar in group" v-if="envVar.value != undefined">
                 <span class="Name col-xs-5 text-right">
                     <input type="text" v-model="envVar.name" class="form-control" />
                 </span>
@@ -446,7 +446,9 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
                     <input type="text" v-model="envVar.value" class="form-control" />
                 </span>
                 <span class="Actions col-xs-2">
-                    <a class="btn" title="Remove"><i class="fa fa-minus"></i></a>
+                    <a class="btn" title="Remove" @click="removeEnvVar(group, envVar)">
+                        <i class="fa fa-minus"></i>
+                    </a>
                     <template v-if="group.isTheOverlap">
                         <a class="btn" title="Ungroup" @click="ungroup(envVar)"><b>&#8623;</b></a>
                     </template>
@@ -509,6 +511,9 @@ Vue.component('app-env-page', (function() {
             addEnvVar: function(group) {
                 var ev = {name: "", value: "", source: group.source};
                 group.push(stage(ev));
+            },
+            removeEnvVar: function(group, envVar) {
+                envVar.value = undefined;
             }
         }
     }
