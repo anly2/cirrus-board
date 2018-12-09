@@ -448,7 +448,7 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
                 <span class="Actions col-xs-2">
                     <a class="btn" title="Remove"><i class="fa fa-minus"></i></a>
                     <template v-if="group.isTheOverlap">
-                        <a class="btn" title="Ungroup"><b>&#8623;</b></a>
+                        <a class="btn" title="Ungroup" @click="ungroup(envVar)"><b>&#8623;</b></a>
                     </template>
                 </span>
             </li>
@@ -486,16 +486,34 @@ viewSelectors['envVars'] = function() {
         }
     };
 };
-Vue.component('app-env-page', {template: '#app-env-page-template', props:["items"],
-    computed: {
-        groupedVars: (function() {
-            var eq = (a,b) => (a.name==b.name && a.value==b.value);
-            return function() {
-                return Grouping.groupWithOverlap(this.items, eq);
-            };
-        }())
+Vue.component('app-env-page', (function() {
+    var eq = (a,b) => (a.name==b.name && a.value==b.value);
+    return {template: '#app-env-page-template', props:["items"],
+        data: function(){ return {
+            groupedVars: Grouping.groupWithOverlap(this.items, eq)
+        };},
+        computed: {
+        },
+        methods: {
+            ungroup: function(envVar) {
+                for (var group of Object.values(this.groupedVars)) {
+                    if (group.isTheOverlap) {
+                        for (var i=0; i<group.length; i++) {
+                            if (eq(envVar, group[i])) {
+                                group.splice(i, 1); i--;
+                            }
+                        }
+                    }
+                    else {
+                        var j = 0;
+                        while (group[j] && group[j].name < envVar.name) j++;
+                        group.splice(j, 0, envVar);
+                    }
+                }
+            }
+        }
     }
-});
+}()));
 </script>
 <!-- component; app-env-page -->
 
