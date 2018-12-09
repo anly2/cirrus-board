@@ -407,6 +407,21 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
     }
 });
 </script>
+<script type="text/javascript">
+(function(selectorName){
+    viewSelectors[selectorName] = function() {
+        return {
+            name: selectorName,
+            queryString: selectorName,
+            title: "Applications",
+            view: "apps-page",
+            select: function(connection) {
+                return connection.apps||[];
+            }
+        };
+    };
+}('apps'))
+</script>
 <!-- component; apps-page -->
 
 
@@ -569,6 +584,11 @@ class Navigation {
         };
     }
 };
+(function(N){
+    window.onhashchange = () => {
+        if (!N.selfUpdate) N.onroute && N.onroute();
+    };
+}(Navigation));
 
 class Naming {
     static toPath(obj) { var path = ""; var o = obj; do { path = (o.name || ""+o) + "/" + path; o = o.source; } while (o); return path.replace(/\/$/, ''); };
@@ -731,26 +751,10 @@ var app = new Vue({
             this.selectors.splice(1, 0, viewSelectors['apps']());
         }
     },
-    
-    appSelector: function() {
-        return {
-            name: 'apps',
-            queryString: 'apps',
-            title: "Applications",
-            view: "apps-page",
-            select: function(connection) {
-                return connection.apps||[];
-            }
-        };
-    }
   },
   created: function() {
-    viewSelectors['apps'] = this.appSelector;
-
-    var update = this.route;
-
-    update();
-    window.onhashchange = update;
+    this.route();
+    Navigation.onroute = this.route;
   }
 })
 </script>
