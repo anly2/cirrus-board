@@ -469,12 +469,17 @@ String.prototype.extract = function(regex, i) { var parts; this.replace(regex, f
 
 class Navigation {
     static navigate(route, selected, append) {
-        /* FIXME: Quite Broken atm */
-        if (!route) throw new Error("No route to navigate to");
-        if (selected && selected.map) {
-            route = ":;" + selected.map(Naming.toPath).join(";") + "&" + route;
+        var qualifier = selected.map(Naming.toPath).join(";");
+
+        if (!append) {
+            return window.location.hash = route + ":" + qualifier;
         }
-        return window.location.hash = (append? window.location.hash : '') + route;
+
+        var existing = window.location.hash.split("&");
+        if (!existing || !existing.length) return route;
+        var l = existing.length-1;
+        existing[l] = existing[l].replace(/^(.*?)(?::(.*)|$)/, "$1:") + qualifier;
+        return window.location.hash = existing.join("&") + "&" + route;
     }
     static selectorsFromPath(fullPath) {
         var selectors = (fullPath||"").split('&')
@@ -484,6 +489,14 @@ class Navigation {
                 var selFactory = viewSelectors[parts[0]];
                 if (!selFactory) return undefined;
                 var sel = selFactory(fullPath, parts[0], parts[1]);
+
+                if (!sel) {
+                    return sel;
+                }
+                if (!sel.queryString)
+                    sel.queryString = path;
+                if (!sel.name)
+                    sel.name = parts[0];
 
                 if (parts[1] && !sel.qualifier) {
                     sel.qualifier = parts[1];
