@@ -524,7 +524,21 @@ class Navigation {
     }
     static route(location) {
         if (!location) location = decodeURI(window.location.hash).replace(/^#/, '');
-        return Navigation.selectors = this.selectorsFromPath(location);
+        var selectors = this.selectorsFromPath(location);
+
+        var proxy = new Proxy(selectors, {
+          set: function(target, property, value, receiver) {
+            target[property] = value;
+
+            if (!isNaN(property)) {
+                Navigation.updateRoute();
+            }
+
+            return true;
+          }
+        });
+
+        return Navigation.selectors = proxy;
     }
     static selectorsFromPath(fullPath) {
         var selectors = (fullPath||"").split('&')
@@ -583,10 +597,17 @@ class Navigation {
             return true;
         };
     }
+
+    static updateRoute() {
+        Navigation.selfUpdate = true;
+        var route = (Navigation.selectors||[]).map(e => e.queryString).join("&");
+        window.location.hash = route;
+    }
 };
 (function(N){
     window.onhashchange = () => {
         if (!N.selfUpdate) N.onroute && N.onroute();
+        N.selfUpdate = false;
     };
 }(Navigation));
 
