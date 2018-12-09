@@ -220,7 +220,14 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
 </script>
 <script type="text/javascript">
 viewSelectors['connections'] = function(fullPath, selectorName, qualifier) {
-    var conns = qualifier.split(/\s*;\s*/).map(connectionExpression => {
+    var savedConnections;
+    try {
+        savedConnections = JSON.parse(localStorage.getItem("connections"));
+    } catch (err) {
+        savedConnections = {};
+    }
+    
+    var conns = (!qualifier)? Object.values(savedConnections) : qualifier.split(/\s*;\s*/).map(connectionExpression => {
         var p = connectionExpression.extract(/(?:(.*?)=)?(.*)/);
         var c = {};
         
@@ -230,7 +237,6 @@ viewSelectors['connections'] = function(fullPath, selectorName, qualifier) {
             return undefined;
         }
 
-        var savedConnections = JSON.parse(localStorage.getItem("connections") || "{}");
         var savedConnection = savedConnections[c.url];
         if (savedConnection) {
             c = Object.assign(savedConnection, c);
@@ -258,6 +264,7 @@ viewSelectors['connections'] = function(fullPath, selectorName, qualifier) {
         qualifier: qualifier
     };
 }
+viewSelectors[''] = viewSelectors['connections'];
 </script>
 <!-- component; connections -->
 
@@ -494,6 +501,11 @@ class Navigation {
         existing[l] = existing[l].replace(/^(.*?)(?::(.*)|$)/, "$1:") + qualifier;
         return window.location.hash = existing.join("&") + "&" + route;
     }
+    static route(location, defaultRoute) {
+        if (!location) location = decodeURI(window.location.hash).replace(/^#/, '');
+        if (!location) location = defaultRoute;
+        return this.selectorsFromPath(location);
+    }
     static selectorsFromPath(fullPath) {
         var selectors = (fullPath||"").split('&')
             .map((path) => {
@@ -704,8 +716,8 @@ var app = new Vue({
     }
   },
   methods: {
-    route: function(path) {
-        this.selectors = Navigation.selectorsFromPath(path);
+    route: function() {
+        this.selectors = Navigation.route(undefined, 'connections&apps');
         if (this.selectors && this.selectors[0]) {
             this.connections = this.selectors[0].select();
         }
@@ -724,10 +736,7 @@ var app = new Vue({
   created: function() {
     viewSelectors['apps'] = this.appSelector;
 
-    var update = () => this.route(
-        decodeURI(window.location.hash)
-            .replace(/^#/, '')
-    );
+    var update = this.route;
 
     update();
     window.onhashchange = update;
