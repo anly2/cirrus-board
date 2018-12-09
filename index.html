@@ -219,52 +219,55 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
 });
 </script>
 <script type="text/javascript">
-viewSelectors['connections'] = function(fullPath, selectorName, qualifier) {
-    var savedConnections;
-    try {
-        savedConnections = JSON.parse(localStorage.getItem("connections"));
-    } catch (err) {
-        savedConnections = {};
-    }
-    
-    var conns = (!qualifier)? Object.values(savedConnections) : qualifier.split(/\s*;\s*/).map(connectionExpression => {
-        var p = connectionExpression.extract(/(?:(.*?)=)?(.*)/);
-        var c = {};
+(function(name) {
+    viewSelectors[''] = viewSelectors[name] = function(fullPath, selectorName, qualifier) {
+        var savedConnections;
+        try {
+            savedConnections = JSON.parse(localStorage.getItem("connections"));
+        } catch (err) {
+            savedConnections = {};
+        }
         
-        c.url = p[1];
-        if (!c.url) {
-            console.error("Connection with no url:", connectionExpression);
-            return undefined;
-        }
+        var conns = (!qualifier)? Object.values(savedConnections) : qualifier.split(/\s*;\s*/).map(connectionExpression => {
+            var p = connectionExpression.extract(/(?:(.*?)=)?(.*)/);
+            var c = {};
+            
+            c.url = p[1];
+            if (!c.url) {
+                console.error("Connection with no url:", connectionExpression);
+                return undefined;
+            }
 
-        var savedConnection = savedConnections[c.url];
-        if (savedConnection) {
-            c = Object.assign(savedConnection, c);
-        }
+            var savedConnection = savedConnections[c.url];
+            if (savedConnection) {
+                c = Object.assign(savedConnection, c);
+            }
 
-        c.name = p[0] || c.name || c.url.replace(/(?:https?)?(?::\/\/)?([^\/]*).*/, "$1");
+            c.name = p[0] || c.name || c.url.replace(/(?:https?)?(?::\/\/)?([^\/]*).*/, "$1");
 
-        if (!c.apps) {
-            var d = MockData.connections.filter(mc => mc.name == c.name);
-            c.apps = d&&d[0]? d[0].apps : [];
-        }
+            if (!c.apps) {
+                var d = MockData.connections.filter(mc => mc.name == c.name);
+                c.apps = d&&d[0]? d[0].apps : [];
+            }
 
-        savedConnections[c.url] = c;
-        localStorage.setItem("connections", JSON.stringify(savedConnections));
+            savedConnections[c.url] = c;
+            localStorage.setItem("connections", JSON.stringify(savedConnections));
 
-        return c;
-    });
-    console.log("Initialized with connections:", conns);
-    return {
-        title: "Connections",
-        view: 'connections',
-        select: function() {
-            return conns;
-        },
-        qualifier: qualifier
-    };
-}
-viewSelectors[''] = viewSelectors['connections'];
+            return c;
+        });
+        var queryString = name + ":" + conns.map(c => c.url).join(";");
+        return {
+            name: name,
+            title: "Connections",
+            queryString: queryString,
+            view: 'connections',
+            select: function() {
+                return conns;
+            },
+            qualifier: qualifier
+        };
+    }
+}('connections'));
 </script>
 <!-- component; connections -->
 
@@ -495,16 +498,18 @@ class Navigation {
             return window.location.hash = route + ":" + qualifier;
         }
 
-        var existing = window.location.hash.split("&");
+        var existing = Navigation.selectors?
+            Navigation.selectors.map(s => s.queryString).filter(s => !!s)
+            : window.location.hash.split("&");
+
         if (!existing || !existing.length) return route;
         var l = existing.length-1;
         existing[l] = existing[l].replace(/^(.*?)(?::(.*)|$)/, "$1:") + qualifier;
         return window.location.hash = existing.join("&") + "&" + route;
     }
-    static route(location, defaultRoute) {
+    static route(location) {
         if (!location) location = decodeURI(window.location.hash).replace(/^#/, '');
-        if (!location) location = defaultRoute;
-        return this.selectorsFromPath(location);
+        return Navigation.selectors = this.selectorsFromPath(location);
     }
     static selectorsFromPath(fullPath) {
         var selectors = (fullPath||"").split('&')
@@ -717,14 +722,20 @@ var app = new Vue({
   },
   methods: {
     route: function() {
-        this.selectors = Navigation.route(undefined, 'connections&apps');
-        if (this.selectors && this.selectors[0]) {
+        this.selectors = Navigation.route();
+        if (!this.selectors) throw new Error("Failed to route!");
+        if (this.selectors[0]) {
             this.connections = this.selectors[0].select();
+        }
+        if (this.selectors.length == 1 || this.selectors[1].name != "apps") {
+            this.selectors.splice(1, 0, viewSelectors['apps']());
         }
     },
     
     appSelector: function() {
         return {
+            name: 'apps',
+            queryString: 'apps',
             title: "Applications",
             view: "apps-page",
             select: function(connection) {
