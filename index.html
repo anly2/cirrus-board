@@ -489,9 +489,12 @@ viewSelectors['envVars'] = function() {
 Vue.component('app-env-page', (function() {
     var eq = (a,b) => (a.name==b.name && a.value==b.value);
     return {template: '#app-env-page-template', props:["items"],
-        data: function(){ return {
-            groupedVars: Grouping.groupWithOverlap(this.items, eq)
-        };},
+        data: (function() {
+            var stage = ev => { ev.org = {name: ev.name, value: ev.value}; return ev; };
+            return function(){ return {
+                groupedVars: Grouping.groupWithOverlap(stage(this.items), eq)
+            };};
+        }()),
         computed: {
         },
         methods: {
@@ -507,7 +510,7 @@ Vue.component('app-env-page', (function() {
                     else {
                         var j = 0;
                         while (group[j] && group[j].name < envVar.name) j++;
-                        group.splice(j, 0, envVar);
+                        group.splice(j, 0, Object.assign({}, envVar, {source: group.source}));
                     }
                 }
             }
@@ -685,8 +688,13 @@ class Grouping {
 
         var grouped = this.groupBy(items, key);
 
+        for (var g of Object.values(grouped)) {
+            g.source = g[0].source;
+        }
+
         if (Object.keys(grouped).length > 1) {
             var overlap = this.takeOverlap(grouped, eq);
+            for (var e of overlap) delete e.source;
             withOverlap(overlap, grouped);
             return sortAll(grouped);
         }
