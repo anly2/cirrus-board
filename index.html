@@ -224,14 +224,27 @@ viewSelectors['connections'] = function(fullPath, selectorName, qualifier) {
         var p = connectionExpression.extract(/(?:(.*?)=)?(.*)/);
         var c = {};
         
-        c.name = p[0] || connectionExpression.replace(/(?:https?)?(?::\/\/)?([^\/]*).*/, "$1");
-
-        /*var savedConnection = localStoraget.getItem()*/
-
         c.url = p[1];
+        if (!c.url) {
+            console.error("Connection with no url:", connectionExpression);
+            return undefined;
+        }
 
-        var d = MockData.connections.filter(mc => mc.name == c.name);
-        c.apps = d&&d[0]? d[0].apps : [];
+        var savedConnections = JSON.parse(localStorage.getItem("connections") || "{}");
+        var savedConnection = savedConnections[c.url];
+        if (savedConnection) {
+            c = Object.assign(savedConnection, c);
+        }
+
+        c.name = p[0] || c.name || c.url.replace(/(?:https?)?(?::\/\/)?([^\/]*).*/, "$1");
+
+        if (!c.apps) {
+            var d = MockData.connections.filter(mc => mc.name == c.name);
+            c.apps = d&&d[0]? d[0].apps : [];
+        }
+
+        savedConnections[c.url] = c;
+        localStorage.setItem("connections", JSON.stringify(savedConnections));
 
         return c;
     });
