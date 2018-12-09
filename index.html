@@ -223,7 +223,7 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
     viewSelectors[''] = viewSelectors[name] = function(fullPath, selectorName, qualifier) {
         var savedConnections;
         try {
-            savedConnections = JSON.parse(localStorage.getItem("connections"));
+            savedConnections = JSON.parse(localStorage.getItem(name));
         } catch (err) {
             savedConnections = {};
         }
@@ -250,11 +250,13 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
                 c.apps = d&&d[0]? d[0].apps : [];
             }
 
-            savedConnections[c.url] = c;
-            localStorage.setItem("connections", JSON.stringify(savedConnections));
-
             return c;
         });
+
+        savedConnections = {};
+        (conns||[]).forEach(c => savedConnections[c.url] = c);
+        localStorage.setItem(name, JSON.stringify(savedConnections));
+
         var queryString = name + ":" + conns.map(c => c.url).join(";");
         return {
             name: name,
