@@ -457,8 +457,8 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
             <li class="add-row row list-group-item">
                 <div class="col-xs-5 col-xs-offset-5 text-right">
                     <template v-if="isDirty(group)">
-                        <a class="btn"><b>Save</b></a>
-                        <a class="btn">Cancel</a>
+                        <a class="btn" @click="save(group)"><strong>Save</strong></a>
+                        <a class="btn" @click="restore(group)">Cancel</a>
                     </template>
                 </div>
                 <div class="col-xs-2">
@@ -514,6 +514,13 @@ Vue.component('app-env-page', (function() {
             },
             removeEnvVar: function(group, envVar) {
                 envVar.value = undefined;
+            },
+            save: function(group) {
+                /*TODO: actual call */
+                group.forEach(stage);
+            },
+            restore: function(group) {
+                group.forEach(ev => {ev.name = ev.org.name; ev.value = ev.org.value;});
             }
         }
     }
