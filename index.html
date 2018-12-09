@@ -60,8 +60,8 @@ header {
         <li v-for="connection in connections">
             <div class="Connection" :class="{focused: connection==focusedConnection}">
                 <div class="row">
-                    <div class="Name col-xs-6">{{connection.name}}</div>
-                    <div class="User col-xs-3">
+                    <div class="Name col-xs-5">{{connection.name}}</div>
+                    <div class="User col-xs-4">
                         <span v-if="connection.auth">as: {{connection.user}}</span>
                         <span v-else><i>not logged in</i></span>
                     </div>
@@ -330,13 +330,23 @@ document.addEventListener('keyup', function(e){
     <h3>Applications</h3>
     <ul class="apps list-unstyled">
         <li v-for="(app, index) in apps" class="App row" :class="{'selected': app.selected}">
-            <label class="col-sm-6">
+            <label class="col-sm-5">
                 <span class="Selection"><input type="checkbox" v-model="app.selected" /></span>
                 <span class="Name">{{app.name}}</span>
                 <span class="Source">({{sourcePath(app)}})</span>
             </label>
-            <div class="col-sm-2">
-                ({{app.state}})
+            <div class="col-sm-3">
+                <span @click="toggleActions(app)">
+                    <span class="State">({{app.state}})</span>
+                    <a class="ActionsToggle btn" v-if="shouldShowActions(app)">&laquo;</a>
+                    <a class="ActionsToggle btn" v-else>&raquo;</a>
+                </span>
+                <span class="Actions" v-if="shouldShowActions(app)">
+                    <a class="btn" title="Start" v-if="app.state == 'stopped'"><i class="fa fa-play"></i></a>
+                    <a class="btn" title="Stop" v-if="app.state != 'stopped'"><i class="fa fa-stop"></i></a>
+                    <a class="btn" title="Restart"><i class="fa fa-repeat"></i></a>
+                    <a class="btn" title="Restage"><i class="fa fa-recycle"></i></a>
+                </span>
             </div>
             <div class="col-sm-4">
                 <ul class="Actions list-inline">
@@ -380,6 +390,10 @@ document.addEventListener('keyup', function(e){
     font-family: Consolas;
     margin-left: 1em;
 }
+.App .ActionsToggle {
+    padding-left: 0px;
+    padding-right: 0px;
+}
 .App .Actions .focused a.btn {
     text-decoration: underline;
     color: black;
@@ -388,7 +402,8 @@ document.addEventListener('keyup', function(e){
 <script type="text/javascript">
 Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
     data: function() { return {
-        actionFocused: -1
+        actionFocused: -1,
+        shownActions: []
     };},
     computed: {
         apps: function() {
@@ -401,6 +416,14 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
     methods: {
         sourcePath: function(app) {
             return Naming.toPath(app.source);
+        },
+        shouldShowActions: function(app) {
+            return this.shownActions.includes(app);
+        },
+        toggleActions: function(app) {
+            var i = this.shownActions.indexOf(app);
+            if (i == -1) this.shownActions.push(app);
+            else this.shownActions.splice(i,1);
         },
         showEnv: function(app) {
             var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
