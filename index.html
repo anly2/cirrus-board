@@ -453,8 +453,14 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
                 </span>
             </li>
             <li class="add-row row list-group-item">
-                <div class="col-xs-2 col-xs-offset-10">
-                    <a class="btn" title="Add"><i class="fa fa-plus"></i></a>
+                <div class="col-xs-5 col-xs-offset-5 text-right">
+                    <template v-if="isDirty(group)">
+                        <a class="btn"><b>Save</b></a>
+                        <a class="btn">Cancel</a>
+                    </template>
+                </div>
+                <div class="col-xs-2">
+                    <a class="btn" title="Add" @click="addEnvVar(group)"><i class="fa fa-plus"></i></a>
                 </div>
             </li>
         </ul>
@@ -488,18 +494,21 @@ viewSelectors['envVars'] = function() {
 };
 Vue.component('app-env-page', (function() {
     var eq = (a,b) => (a.name==b.name && a.value==b.value);
+    var stage = ev => { ev.org = {name: ev.name, value: ev.value}; return ev; };
     return {template: '#app-env-page-template', props:["items"],
-        data: (function() {
-            var stage = ev => { ev.org = {name: ev.name, value: ev.value}; return ev; };
-            return function(){ return {
-                groupedVars: Grouping.groupWithOverlap(stage(this.items), eq)
-            };};
-        }()),
-        computed: {
-        },
+        data: function(){ return {
+            groupedVars: Grouping.groupWithOverlap(this.items.map(stage), eq)
+        };},
         methods: {
+            isDirty: function(group) {
+                return group.some(e => e && (!e.org || !eq(e, e.org)));
+            },
             ungroup: function(envVar) {
                 Grouping.ungroup(envVar, this.groupedVars, eq);
+            },
+            addEnvVar: function(group) {
+                var ev = {name: "", value: "", source: group.source};
+                group.push(stage(ev));
             }
         }
     }
