@@ -562,7 +562,9 @@ Vue.component('app-env-page', (function() {
         <h3>
             <span class="Text">Logs</span>
             <span class="Actions" style="">
-                <a class="btn" title="Stop" @click="pauseLogs"><i class="fa fa-stop"></i></a>
+                <a class="btn" title="Pause Live Logs" v-if="liveLogs" @click="pauseLogs()"><i class="fa fa-stop"></i></a>
+                <a class="btn" title="Live Tail Logs" v-if="!liveLogs" @click="tailLogs()"><i class="fa fa-play"></i></a>
+                <a class="btn" title="Configure"><i class="fa fa-cog"></i></a>
             </span>
         </h3>
 
@@ -580,6 +582,10 @@ Vue.component('app-env-page', (function() {
 </div>
 </template>
 <style>
+.app-logs-page .Actions {
+    margin-left: 1em;
+}
+
 .loglines {
     margin-top: 0.75em;
     max-width: calc(100vw - 15px);
@@ -619,18 +625,26 @@ Palette = ["#375E97", "#FB6542", "#FFBB00", "#3F681C"];
 Vue.component('app-logs-page', (function() {
     return {template: '#app-logs-page-template', props:["items"],
         data: function(){ return {
+            logSources: this.items,
             colorIds: this.assignColorIds(this.items.map(e=>e.app)),
             loglines: this.tailLogs(this.items)
         };},
+        computed: {
+            liveLogs: function() {
+                return this.logSources.every(src => src.live);
+            }
+        },
         methods: {
             tailLogs: function(logSources) {
+                if (!logSources) logSources = this.logSources;
                 if (!logSources instanceof Array) {
                     logSources = [logSources];
                 }
 
-                var loglines = [];
+                var loglines = this.loglines||[];
                 logSources.forEach(src => {
                     /*TODO: FIXME: NO DUMMY MOCKING*/
+                    src.live = true;
 
                     var N = 20;
                     var n = 0;
@@ -655,6 +669,13 @@ Vue.component('app-logs-page', (function() {
 
                 return loglines;
             },
+            pauseLogs: function() {
+                this.items.forEach(src => {
+                    clearTimeout(src.logsMockPrinter);
+                    delete src.logsMockPrinter;
+                    src.live = false;
+                });
+            },
             assignColorIds: function(elems) {
                 var colorIds = {};
                 elems.forEach(elem => {
@@ -664,12 +685,6 @@ Vue.component('app-logs-page', (function() {
             },
             colorId: function(elem) {
                 return this.colorIds[elem.name];
-            },
-            pauseLogs: function() {
-                this.items.forEach(src => {
-                    clearTimeout(src.logsMockPrinter);
-                    delete src.logsMockPrinter;
-                });
             }
         }
     }
