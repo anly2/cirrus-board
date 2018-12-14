@@ -354,7 +354,7 @@ document.addEventListener('keyup', function(e){
                         {title:'Bindings', action:showEnv},
                         {title:'Routes', action:showEnv},
                         {title:'Environment variables', action:showEnv},
-                        {title:'Logs', action:showEnv}
+                        {title:'Logs', action:showLogs}
                     ]">
                         <span v-if="app.selected || !someSelected"
                               :class="{'focused': someSelected && actionFocused == actionIndex}"
@@ -428,6 +428,10 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
         showEnv: function(app) {
             var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
             Navigation.navigate('envVars', selected, true);
+        },
+        showLogs: function(app) {
+            var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
+            Navigation.navigate('logs', selected, true);
         }
     }
 });
@@ -544,6 +548,73 @@ Vue.component('app-env-page', (function() {
             },
             restore: function(group) {
                 group.forEach(ev => {ev.name = ev.org.name; ev.value = ev.org.value;});
+            }
+        }
+    }
+}()));
+</script>
+<!-- component; app-env-page -->
+
+
+<!-- component: app-logs-page -->
+<template type="text/x-template" id="app-logs-page-template">
+<div class="Page app-logs-page">
+    <h3>Logs</h3>
+
+    <ul class="list-unstyled">
+        <li class="Logline" v-for="logline in loglines">
+            <span class="Source">{{logline.source.name}}</span>
+            <span class="Logline">{{logline.text}}</span>
+        </li>
+    </ul>
+</div>
+</template>
+<style>
+.app-logs-page {
+}
+.Logline {
+    font-family: monospace;
+    white-space: pre;
+    line-height: 1.5em;
+}
+.Logline .Source {
+    font-style: italic;
+    margin-right: 1em;
+}
+</style>
+<script type="text/javascript">
+viewSelectors['logs'] = function() {
+    return {
+        title: "Logs",
+        view: "app-logs-page",
+        select: function(app) {
+            return [{app: app}];
+        }
+    };
+};
+Vue.component('app-logs-page', (function() {
+    return {template: '#app-logs-page-template', props:["items"],
+        data: function(){ return {
+            loglines: this.tailLogs(this.items)
+        };},
+        methods: {
+            tailLogs: function(logSources) {
+                if (!logSources instanceof Array) {
+                    logSources = [logSources];
+                }
+
+                var loglines = [];
+                logSources.forEach(src => {
+                    /*TODO: FIXME: NO DUMMY MOCKING*/
+                    src.logsMockPrinter = setInterval(function(){
+                        var logline = new Date() + " --- random log line " + Math.random();
+                        var ll = {source: src.app, text: logline};
+                        loglines.push(ll);
+                    }, 1337);
+
+                });
+
+                return loglines;
             }
         }
     }
