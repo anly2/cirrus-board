@@ -561,7 +561,7 @@ Vue.component('app-env-page', (function() {
 <div class="Page app-logs-page">
     <h3>Logs</h3>
 
-    <ul class="list-unstyled">
+    <ul class="loglines list-unstyled">
         <li class="Logline" v-for="logline in loglines">
             <span class="Source">
                 <div class="ColorId"
@@ -575,7 +575,13 @@ Vue.component('app-env-page', (function() {
 </div>
 </template>
 <style>
-.app-logs-page {
+.loglines {
+    margin-top: 0.75em;
+    max-width: calc(100vw - 15px);
+    max-height: calc(100vh - 11.75em);
+    overflow: auto;
+    border: 1px solid gray;
+    padding: 0.5em 1em;
 }
 .Logline {
     font-family: monospace;
