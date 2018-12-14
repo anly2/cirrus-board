@@ -563,7 +563,12 @@ Vue.component('app-env-page', (function() {
 
     <ul class="list-unstyled">
         <li class="Logline" v-for="logline in loglines">
-            <span class="Source">{{logline.source.name}}</span>
+            <span class="Source">
+                <div class="ColorId"
+                    :style="{backgroundColor: colorId(logline.source)}"
+                    :title="logline.source.name">
+                </div>
+            </span>
             <span class="Logline">{{logline.text}}</span>
         </li>
     </ul>
@@ -577,9 +582,16 @@ Vue.component('app-env-page', (function() {
     white-space: pre;
     line-height: 1.5em;
 }
+.Logline .Source .ColorId {
+    display: inline-block;
+    width: 0.75em;
+    height: 0.75em;
+    border-radius: 50%;
+    vertical-align: middle;
+    border: 1px solid gray;
+}
 .Logline .Source {
     font-style: italic;
-    margin-right: 1em;
 }
 </style>
 <script type="text/javascript">
@@ -592,9 +604,11 @@ viewSelectors['logs'] = function() {
         }
     };
 };
+Palette = ["#375E97", "#FB6542", "#FFBB00", "#3F681C"];
 Vue.component('app-logs-page', (function() {
     return {template: '#app-logs-page-template', props:["items"],
         data: function(){ return {
+            colorIds: this.assignColorIds(this.items.map(e=>e.app)),
             loglines: this.tailLogs(this.items)
         };},
         methods: {
@@ -606,15 +620,39 @@ Vue.component('app-logs-page', (function() {
                 var loglines = [];
                 logSources.forEach(src => {
                     /*TODO: FIXME: NO DUMMY MOCKING*/
-                    src.logsMockPrinter = setInterval(function(){
+
+                    var N = 20;
+                    var n = 0;
+
+                    var printLine = function(){
                         var logline = new Date() + " --- random log line " + Math.random();
                         var ll = {source: src.app, text: logline};
                         loglines.push(ll);
-                    }, 1337);
+                    };
 
+                    var nPrint;
+                    nPrint = function() {
+                        n++;
+                        printLine();
+                        if (n < N) {
+                            src.logsMockPrinter = setTimeout(nPrint, 1337 * 5 * Math.random());
+                        }
+                    };
+                    nPrint();
                 });
 
+
                 return loglines;
+            },
+            assignColorIds: function(elems) {
+                var colorIds = {};
+                elems.forEach(elem => {
+                    colorIds[elem.name] = Palette[Object.keys(colorIds).length];
+                });
+                return colorIds;
+            },
+            colorId: function(elem) {
+                return this.colorIds[elem.name];
             }
         }
     }
