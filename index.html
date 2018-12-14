@@ -559,7 +559,12 @@ Vue.component('app-env-page', (function() {
 <!-- component: app-logs-page -->
 <template type="text/x-template" id="app-logs-page-template">
 <div class="Page app-logs-page">
-    <h3>Logs</h3>
+        <h3>
+            <span class="Text">Logs</span>
+            <span class="Actions" style="">
+                <a class="btn" title="Stop" @click="pauseLogs"><i class="fa fa-stop"></i></a>
+            </span>
+        </h3>
 
     <ul class="loglines list-unstyled">
         <li class="Logline" v-for="logline in loglines">
@@ -659,6 +664,12 @@ Vue.component('app-logs-page', (function() {
             },
             colorId: function(elem) {
                 return this.colorIds[elem.name];
+            },
+            pauseLogs: function() {
+                this.items.forEach(src => {
+                    clearTimeout(src.logsMockPrinter);
+                    delete src.logsMockPrinter;
+                });
             }
         }
     }
