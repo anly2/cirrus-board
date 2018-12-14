@@ -4,9 +4,12 @@
     <title>Cirrus board</title>
     <meta charset="UTF-8"> 
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <!-- <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous"> -->
+    <link rel="stylesheet" href="fontawesome-free-5.6.1-web/css/all.css">
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
+    <script src="vue.js"></script>
 </head>
 <body>
 
@@ -344,7 +347,7 @@ document.addEventListener('keyup', function(e){
                 <span class="Actions" v-if="shouldShowActions(app)">
                     <a class="btn" title="Start" v-if="app.state == 'stopped'"><i class="fa fa-play"></i></a>
                     <a class="btn" title="Stop" v-if="app.state != 'stopped'"><i class="fa fa-stop"></i></a>
-                    <a class="btn" title="Restart"><i class="fa fa-repeat"></i></a>
+                    <a class="btn" title="Restart"><i class="fa fa-repeat fas fa-redo"></i></a>
                     <a class="btn" title="Restage"><i class="fa fa-recycle"></i></a>
                 </span>
             </div>
