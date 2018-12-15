@@ -17,17 +17,17 @@
 
 <!-- App css side -->
 <style type="text/css">
-header {
-    margin-bottom: 1em;
-}
+    header {
+        margin-bottom: 1em;
+    }
 
-.Actions a {
-    cursor: pointer;
-}
+    .Actions a {
+        cursor: pointer;
+    }
 
-.breadcrumbs {
-    font-size: 1.2em;
-}
+    .breadcrumbs {
+        font-size: 1.2em;
+    }
 </style>
 
 
@@ -129,32 +129,32 @@ header {
 </div>
 </template>
 <style>
-.Connection {
-    font-size: 1.25em;
-    padding: 0.25em 1em;
-    /* #1234EF http://materialuicolors.co/?utm_source=launchers */
-    background-color: #B0BEC5;
-    border-bottom: 1px solid #263238;
-}
-.Connection.focused {
-    border-left: 0.25em solid #455A64;
-    padding-left: 0.75em;
-}
-.Connection > .Name {
-    font-variant: small-caps;
-}
-.Connection > .User {
-    font-size: 0.8em;
-    line-height: 1.75em;
-}
-.connections .add-button {
-    display: block;
-    line-height: 1.5em;
-    padding: 0.25em;
-}
-.connections:not(.empty) .add-button {
-    margin-top: -1em;
-}
+    .Connection {
+        font-size: 1.25em;
+        padding: 0.25em 1em;
+        /* #1234EF http://materialuicolors.co/?utm_source=launchers */
+        background-color: #B0BEC5;
+        border-bottom: 1px solid #263238;
+    }
+    .Connection.focused {
+        border-left: 0.25em solid #455A64;
+        padding-left: 0.75em;
+    }
+    .Connection > .Name {
+        font-variant: small-caps;
+    }
+    .Connection > .User {
+        font-size: 0.8em;
+        line-height: 1.75em;
+    }
+    .connections .add-button {
+        display: block;
+        line-height: 1.5em;
+        padding: 0.25em;
+    }
+    .connections:not(.empty) .add-button {
+        margin-top: -1em;
+    }
 </style>
 <script type="text/javascript">
 Vue.component('connections', {template: '#connections-template', props:["items"],
@@ -305,17 +305,17 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
   </transition>
 </template>
 <style>
-.dialogue-mask { position: fixed; z-index: 9998; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, .5); display: table; transition: opacity .3s ease; }
-.dialogue-wrapper { display: table-cell; vertical-align: middle; }
-.dialogue-container { width: 40%; margin: 0px auto; padding: 20px 30px; background-color: #fff; border-radius: 2px; box-shadow: 0 2px 8px rgba(0, 0, 0, .33); transition: all .3s ease; font-family: Helvetica, Arial, sans-serif; }
-.dialogue-header h3 { margin-top: 0; color: #42b983; }
-.dialogue-body { margin: 20px 0; }
-.dialogue-default-button { float: right; }
+    .dialogue-mask { position: fixed; z-index: 9998; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, .5); display: table; transition: opacity .3s ease; }
+    .dialogue-wrapper { display: table-cell; vertical-align: middle; }
+    .dialogue-container { width: 40%; margin: 0px auto; padding: 20px 30px; background-color: #fff; border-radius: 2px; box-shadow: 0 2px 8px rgba(0, 0, 0, .33); transition: all .3s ease; font-family: Helvetica, Arial, sans-serif; }
+    .dialogue-header h3 { margin-top: 0; color: #42b983; }
+    .dialogue-body { margin: 20px 0; }
+    .dialogue-default-button { float: right; }
 
-.dialogue-enter { opacity: 0; }
-.dialogue-leave-active { opacity: 0; }
-.dialogue-enter .dialogue-container,
-.dialogue-leave-active .dialogue-container { -webkit-transform: scale(1.1); transform: scale(1.1); }
+    .dialogue-enter { opacity: 0; }
+    .dialogue-leave-active { opacity: 0; }
+    .dialogue-enter .dialogue-container,
+    .dialogue-leave-active .dialogue-container { -webkit-transform: scale(1.1); transform: scale(1.1); }
 </style>
 <script type="text/javascript">
 Vue.component('dialogue', {template: '#dialogue-template'})
@@ -375,32 +375,32 @@ document.addEventListener('keyup', function(e){
 </div>
 </template>
 <style>
-.App {
-    border-top: 1px dotted gray;
-    padding: 0.5em 1em;
-    line-height: 2em;
-}
-.App:last-child {
-    border-bottom: 1px dotted gray;
-}
-.App:not(.selected) label {
-    font-weight: normal;
-}
-.App .Name {
-    margin-left: 0.5em;
-}
-.App .Source {
-    font-family: Consolas;
-    margin-left: 1em;
-}
-.App .ActionsToggle {
-    padding-left: 0px;
-    padding-right: 0px;
-}
-.App .Actions .focused a.btn {
-    text-decoration: underline;
-    color: black;
-}
+    .App {
+        border-top: 1px dotted gray;
+        padding: 0.5em 1em;
+        line-height: 2em;
+    }
+    .App:last-child {
+        border-bottom: 1px dotted gray;
+    }
+    .App:not(.selected) label {
+        font-weight: normal;
+    }
+    .App .Name {
+        margin-left: 0.5em;
+    }
+    .App .Source {
+        font-family: Consolas;
+        margin-left: 1em;
+    }
+    .App .ActionsToggle {
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    .App .Actions .focused a.btn {
+        text-decoration: underline;
+        color: black;
+    }
 </style>
 <script type="text/javascript">
 Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
@@ -500,19 +500,19 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
 </div>
 </template>
 <style>
-.app-env-page h3 {
-    margin-bottom: 1.25em;
-}
-.app-env .list-unstyled li {
-    margin: 0.5em 0em;
-}
-.app-env .add-row {
-    padding-top:0px;
-    padding-bottom:0px;
-    margin-bottom: -1.25em;
-    border-bottom-width: 0px;
-}
-.app-env *[class*='col-'] { padding: 0px 5px; }
+    .app-env-page h3 {
+        margin-bottom: 1.25em;
+    }
+    .app-env .list-unstyled li {
+        margin: 0.5em 0em;
+    }
+    .app-env .add-row {
+        padding-top:0px;
+        padding-bottom:0px;
+        margin-bottom: -1.25em;
+        border-bottom-width: 0px;
+    }
+    .app-env *[class*='col-'] { padding: 0px 5px; }
 </style>
 <script type="text/javascript">
 viewSelectors['envVars'] = function() {
@@ -585,34 +585,34 @@ Vue.component('app-env-page', (function() {
 </div>
 </template>
 <style>
-.app-logs-page .Actions {
-    margin-left: 1em;
-}
+    .app-logs-page .Actions {
+        margin-left: 1em;
+    }
 
-.loglines {
-    margin-top: 0.75em;
-    max-width: calc(100vw - 15px);
-    max-height: calc(100vh - 11.75em);
-    overflow: auto;
-    border: 1px solid gray;
-    padding: 0.5em 1em;
-}
-.Logline {
-    font-family: monospace;
-    white-space: pre;
-    line-height: 1.5em;
-}
-.Logline .Source .ColorId {
-    display: inline-block;
-    width: 0.75em;
-    height: 0.75em;
-    border-radius: 50%;
-    vertical-align: middle;
-    border: 1px solid gray;
-}
-.Logline .Source {
-    font-style: italic;
-}
+    .loglines {
+        margin-top: 0.75em;
+        max-width: calc(100vw - 15px);
+        max-height: calc(100vh - 11.75em);
+        overflow: auto;
+        border: 1px solid gray;
+        padding: 0.5em 1em;
+    }
+    .Logline {
+        font-family: monospace;
+        white-space: pre;
+        line-height: 1.5em;
+    }
+    .Logline .Source .ColorId {
+        display: inline-block;
+        width: 0.75em;
+        height: 0.75em;
+        border-radius: 50%;
+        vertical-align: middle;
+        border: 1px solid gray;
+    }
+    .Logline .Source {
+        font-style: italic;
+    }
 </style>
 <script type="text/javascript">
 viewSelectors['logs'] = function() {
