@@ -355,16 +355,22 @@ document.addEventListener('keyup', function(e){
                 <span class="Source">({{sourcePath(app)}})</span>
             </label>
             <div class="col-sm-3">
-                <span @click="toggleActions(app)">
-                    <span class="State">({{app.state}})</span>
-                    <a class="ActionsToggle btn" v-if="shouldShowActions(app)">&laquo;</a>
-                    <a class="ActionsToggle btn" v-else>&raquo;</a>
+                <span v-if="app.selected || !someSelected">
+                    <span @click="toggleActions(app)">
+                        <span class="State" style="cursor: pointer;">({{app.state}})</span>
+                        <a class="ActionsToggle btn" v-if="shouldShowActions(app)">&laquo;</a>
+                        <a class="ActionsToggle btn" v-else>&raquo;</a>
+                    </span>
+                    <span class="Actions" v-if="shouldShowActions(app)">
+                        <a class="btn" title="Start" v-if="app.state == 'stopped'"><i class="fa fa-play"></i></a>
+                        <a class="btn" title="Stop" v-if="app.state != 'stopped'"><i class="fa fa-stop"></i></a>
+                        <a class="btn" title="Restart"><i class="fa fa-repeat fas fa-redo"></i></a>
+                        <a class="btn" title="Restage"><i class="fa fa-recycle"></i></a>
+                    </span>
                 </span>
-                <span class="Actions" v-if="shouldShowActions(app)">
-                    <a class="btn" title="Start" v-if="app.state == 'stopped'"><i class="fa fa-play"></i></a>
-                    <a class="btn" title="Stop" v-if="app.state != 'stopped'"><i class="fa fa-stop"></i></a>
-                    <a class="btn" title="Restart"><i class="fa fa-repeat fas fa-redo"></i></a>
-                    <a class="btn" title="Restage"><i class="fa fa-recycle"></i></a>
+                <span v-else>
+                    <span class="State">({{app.state}})</span>
+                    <a class="ActionsToggle btn disabled">&times;</a>
                 </span>
             </div>
             <div class="col-sm-4">
