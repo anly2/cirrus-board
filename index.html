@@ -329,8 +329,24 @@ document.addEventListener('keyup', function(e){
 
 <!-- component: apps-page -->
 <template type="text/x-template" id="apps-page-template">
-<div class="Page">
+<div class="apps-page Page">
     <h3>Applications</h3>
+
+    <div class="Filter row form-inline">
+        <span class="col-sm-3">
+            <label class="Selection form-check form-group">
+                <input type="checkbox" class="form-check-input" title="Toggle all"
+                    v-model="allSelected" />
+                <span class="sr-only form-check-label">(all)</span>
+            </label>
+            <span class="NameFilter form-group">
+                <input type="text" class="form-control input-sm"
+                    v-model="nameFilterExpression"
+                    placeholder="filter apps" />
+            </span>
+        </span>
+    </div>
+
     <ul class="apps list-unstyled">
         <li v-for="(app, index) in apps" class="App row" :class="{'selected': app.selected}">
             <label class="col-sm-5">
@@ -375,6 +391,19 @@ document.addEventListener('keyup', function(e){
 </div>
 </template>
 <style>
+    .apps-page .Filter {
+        padding: 0.5em 1em;
+    }
+    .apps-page .Filter .Selection {
+        margin-right: 0.5em;
+    }
+    .apps-page .Filter .Selection input + span {
+        vertical-align: top;
+    }
+    .apps-page .Filter .NameFilter input {
+        height: 25px;
+        width: 17.5em;
+    }
     .App {
         border-top: 1px dotted gray;
         padding: 0.5em 1em;
@@ -406,14 +435,35 @@ document.addEventListener('keyup', function(e){
 Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
     data: function() { return {
         actionFocused: -1,
+        nameFilterExpression: "",
         shownActions: []
     };},
     computed: {
+        nameFilter: function() {
+            try {
+                var regex = new RegExp((this.nameFilterExpression||"").replace(/(^|[^\)\]])\*/, "$1.*"));
+                return name => regex.test(name);
+            }
+            catch (ex) {
+                return name => false;
+            }
+        },
         apps: function() {
-            return (this.items||[]).sort((a,b) => a.name < b.name? -1 : a.name == b.name? 0 : 1);
+            return (this.items||[])
+                .map(e => { e.displayName = Naming.displayName(Naming.toPath(e)); return e; })
+                .filter(e => this.nameFilter(e.displayName))
+                .sort((a,b) => a.displayName < b.displayName? -1 : a.displayName == b.displayName? 0 : 1);
         },
         someSelected: function() {
-            return this.items.some(e=>e.selected);
+            return this.apps.some(e=>e.selected);
+        },
+        allSelected: {
+            get: function() {
+                return this.apps.every(e=>e.selected);
+            },
+            set: function(t) {
+                this.apps.forEach(e=>Vue.set(e, "selected", t));
+            }
         }
     },
     methods: {
@@ -429,11 +479,11 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
             else this.shownActions.splice(i,1);
         },
         showEnv: function(app) {
-            var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
+            var selected = this.someSelected? this.apps.filter(e=>e.selected) : [app];
             Navigation.navigate('envVars', selected, true);
         },
         showLogs: function(app) {
-            var selected = this.someSelected? this.items.filter(e=>e.selected) : [app];
+            var selected = this.someSelected? this.apps.filter(e=>e.selected) : [app];
             Navigation.navigate('logs', selected, true);
         }
     }
