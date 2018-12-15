@@ -188,7 +188,7 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
             this.connections.forEach(function(c){if(c.onCancel)c.onCancel(c)});
             var i = this.connections.indexOf(connection);
             if (i > -1) this.connections.splice(i, 1);
-            this.$emit("update:items", this.connections.slice());
+            this.updateConnections();
         },
         submitConnection: function() {
             var c = this.focusedConnection;
@@ -202,21 +202,26 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
                 })
                 .then(t => {
                     var d = MockData.connections.filter(mc => mc.name == c.name);
+                    console.log(c.name, d);
                     c.apps = d&&d[0]? d[0].apps : [];
-                    this.$emit("update:items", this.connections.slice());
+                    console.log(c.apps);
+                    this.updateConnections();
                 })
                 .catch(console.error);
 
             delete c.onCancel;
             this.focusedConnection = false;
         },
-        unfocusConnection: function () {
+        unfocusConnection: function() {
             var c = this.focusedConnection;
             if (c && c.onCancel) {
                 c.onCancel(c);
             }
             delete c.onCancel;
             this.focusedConnection = false
+        },
+        updateConnections: function() {
+            this.$emit("update:items", this.connections.slice());
         }
     }
 });
@@ -226,7 +231,7 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
     viewSelectors[''] = viewSelectors[name] = function(fullPath, selectorName, qualifier) {
         var savedConnections;
         try {
-            savedConnections = JSON.parse(localStorage.getItem(name));
+            savedConnections = JSON.parse(localStorage.getItem(name)) || {};
         } catch (err) {
             savedConnections = {};
         }
