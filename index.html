@@ -389,7 +389,7 @@ document.addEventListener('keyup', function(e){
                 <ul class="Actions list-inline">
                     <li v-for="(link, actionIndex) in [
                         {title:'Bindings', action:showBindings},
-                        {title:'Routes', action:showEnv},
+                        {title:'Routes', action:showRoutes},
                         {title:'Environment variables', action:showEnv},
                         {title:'Logs', action:showLogs}
                     ]">
@@ -496,17 +496,21 @@ Vue.component('apps-page', {template: '#apps-page-template', props:["items"],
             if (i == -1) this.shownActions.push(app);
             else this.shownActions.splice(i,1);
         },
-        showBindings: function(app) {
+        show: function(app, page) {
             var selected = this.someSelected? this.apps.filter(e=>e.selected) : [app];
-            Navigation.navigate('bindings', selected, true);
+            Navigation.navigate(page, selected, true);
+        },
+        showBindings: function(app) {
+            this.show(app, 'bindings');
+        },
+        showRoutes: function(app) {
+            this.show(app, 'routes');
         },
         showEnv: function(app) {
-            var selected = this.someSelected? this.apps.filter(e=>e.selected) : [app];
-            Navigation.navigate('envVars', selected, true);
+            this.show(app, 'envVars');
         },
         showLogs: function(app) {
-            var selected = this.someSelected? this.apps.filter(e=>e.selected) : [app];
-            Navigation.navigate('logs', selected, true);
+            this.show(app, 'logs');
         }
     }
 });
@@ -636,6 +640,111 @@ Vue.component('app-bindings-page', (function() {
 }()));
 </script>
 <!-- component; app-bindings-page -->
+
+
+<!-- component: app-routes-page -->
+<template type="text/x-template" id="app-routes-page-template">
+<div class="Page app-routes-page">
+    <h3>Routes</h3>
+
+    <form class="app-routes" v-for="(group, groupName) in groupedRoutes">
+        <div>
+            <h4 v-if="group.isTheOverlap">Overlapping everywhere</h4>
+            <h4 v-else>{{groupName}}</h4>
+        </div>
+        <ul class="list-group list-group-flush" style="max-width: 50em;">
+            <li v-for="route in group"
+                class="Route form-row row list-group-item"
+                :class="{'remnant': route.isRemnant}">
+                <span class="Name col-xs-8">{{route.name}}</span>
+                <span class="Actions col-xs-2 text-right">
+                    <a class="btn" title="Rebind" @click="rebind(group, route)">
+                        <i class="fas fa-retweet"></i>
+                    </a>
+                </span>
+                <span class="Actions col-xs-2">
+                    <template v-if="route.isRemnant">
+                        <a class="btn" title="Bind back" @click="bind(group, route)">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </template>
+                    <template v-else>
+                        <a class="btn" title="Remove" @click="remove(group, route)">
+                            <i class="fa fa-minus"></i>
+                        </a>
+                    </template>
+                    <template v-if="group.isTheOverlap">
+                        <a class="btn" title="Ungroup" @click="ungroup(route)"><b>&#8623;</b></a>
+                    </template>
+                </span>
+            </li>
+            <li class="add-row row list-group-item">
+                <div class="col-xs-5 col-xs-offset-5 text-right">
+                    <template v-if="group.isDirty">
+                        <a class="btn" @click="restage(group)"><strong>Restage?</strong></a>
+                    </template>
+                </div>
+                <div class="col-xs-2">
+                    <a class="btn" title="Add" @click="addBinding(group)"><i class="fa fa-plus"></i></a>
+                </div>
+            </li>
+        </ul>
+    </form>
+</div>
+</template>
+<style>
+    .app-routes-page h3 {
+        margin-bottom: 1.25em;
+    }
+    .app-routes .add-row {
+        padding-top:0px;
+        padding-bottom:0px;
+        margin-bottom: -0.75em;
+        border-bottom-width: 0px;
+    }
+</style>
+<script type="text/javascript">
+viewSelectors['routes'] = function() {
+    return {
+        title: "Routes",
+        view: "app-routes-page",
+        select: function(app) {
+            return app.routes||[];
+        }
+    };
+};
+Vue.component('app-routes-page', (function() {
+    var eq = (a,b) => (a.name==b.name);
+    return {template: '#app-routes-page-template', props:["items"],
+        data: function(){ return {
+            groupedRoutes: Grouping.groupWithOverlap(this.items||[], eq)
+        };},
+        methods: {
+            ungroup: function(elem) {
+                Grouping.ungroup(elem, this.groupedRoutes, eq);
+            },
+            addBinding: function(group) {
+                Vue.set(group, "isDirty", true);
+            },
+            remove: function(group, binding) {
+                Vue.set(binding, "isRemnant", true);
+                Vue.set(group, "isDirty", true);
+            },
+            bind: function(group, binding) {
+                Vue.set(binding, "isRemnant", false);
+                Vue.set(group, "isDirty", true);
+            },
+            rebind: function(group, binding) {
+                Vue.set(group, "isDirty", true);
+            },
+            restage: function(group) {
+                Vue.set(group, "isDirty", false);
+            }
+        }
+    }
+}()));
+</script>
+<!-- component; app-routes-page -->
 
 
 <!-- component: app-env-page -->
