@@ -852,14 +852,14 @@ Vue.component('app-env-page', (function() {
 <!-- component: app-logs-page -->
 <template type="text/x-template" id="app-logs-page-template">
 <div class="Page app-logs-page">
-        <h3>
-            <span class="Text">Logs</span>
-            <span class="Actions" style="">
-                <a class="btn" title="Pause Live Logs" v-if="liveLogs" @click="pauseLogs()"><i class="fa fa-stop"></i></a>
-                <a class="btn" title="Live Tail Logs" v-if="!liveLogs" @click="tailLogs()"><i class="fa fa-play"></i></a>
-                <a class="btn" title="Configure"><i class="fa fa-cog"></i></a>
-            </span>
-        </h3>
+    <h3>
+        <span class="Text">Logs</span>
+        <span class="Actions" style="">
+            <a class="btn" title="Pause Live Logs" v-if="liveLogs" @click="pauseLogs()"><i class="fa fa-stop"></i></a>
+            <a class="btn" title="Live Tail Logs" v-if="!liveLogs" @click="tailLogs()"><i class="fa fa-play"></i></a>
+            <a class="btn" title="Configure" @click="showCustomizingScript=true"><i class="fa fa-cog"></i></a>
+        </span>
+    </h3>
 
     <ul class="loglines list-unstyled">
         <li class="Logline" v-for="logline in loglines">
@@ -872,6 +872,13 @@ Vue.component('app-env-page', (function() {
             <span class="Logline">{{logline.text}}</span>
         </li>
     </ul>
+
+    <dialogue v-if="showCustomizingScript" @submit="submitCustomizingScript()" @cancel="cancelCustomizingScript()">
+        <h3 slot="header">Customizing script</h3>
+        <form slot="body">
+            <textarea class="form-control" v-model="inputLogsCustomScript" placeholder="e.g. gaialogs.js"></textarea>
+        </form>
+    </dialogue>
 </div>
 </template>
 <style>
@@ -920,12 +927,27 @@ Vue.component('app-logs-page', (function() {
         data: function(){ return {
             logSources: this.items,
             colorIds: this.assignColorIds(this.items.map(e=>e.app)),
-            loglines: this.tailLogs(this.items)
+            loglines: this.tailLogs(this.items),
+            showCustomizingScript: false,
+            inputLogsCustomScript: ""
         };},
         computed: {
             liveLogs: function() {
                 return this.logSources.every(src => src.live);
-            }
+            },
+            logsCustomScript: (function(keyLogsScript) { return {
+                get: function() {
+                    return localStorage.getItem(keyLogsScript) || "";
+                },
+                set: function(v) {
+                    return localStorage.setItem(keyLogsScript, v);
+                }
+            }; }("logsCustomizingScript"))
+        },
+        created: function() {
+            var s = this.logsCustomScript;
+            eval(s);
+            this.inputLogsCustomScript = s;
         },
         methods: {
             tailLogs: function(logSources) {
@@ -978,6 +1000,13 @@ Vue.component('app-logs-page', (function() {
             },
             colorId: function(elem) {
                 return this.colorIds[elem.name];
+            },
+            submitCustomizingScript: function() {
+                this.logsCustomScript = this.inputLogsCustomScript;
+                this.showCustomizingScript = false;
+            },
+            cancelCustomizingScript: function() {
+                this.showCustomizingScript = false;
             }
         }
     }
