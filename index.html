@@ -257,17 +257,24 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
             return c;
         });
 
-        var queryString = name + ":" + conns.map(c => c.url).join(";");
-        return {
+        var updateQuery = function(conns) {
+            this.qualifier = conns.map(c => c.url).join(";");
+            return this.queryString = name + (this.qualifier? ":" + this.qualifier : "");
+        };
+
+        var r = {
             name: name,
             title: "Connections",
-            queryString: queryString,
+            queryString: "",
             view: 'connections',
             select: function() {
                 return conns;
             },
-            qualifier: qualifier
+            qualifier: qualifier,
+            updateQuery: updateQuery
         };
+        r.updateQuery(conns);
+        return r;
     }
 }('connections'));
 </script>
@@ -1290,6 +1297,13 @@ var app = new Vue({
         var savedConnections = {};
         conns.forEach(c => savedConnections[c.url] = {name: c.name, url: c.url});
         Store.connections = savedConnections;
+        try {
+            this.selectors[0].updateQuery(conns);
+            Navigation.updateRoute();
+        }
+        catch(e) {
+            console.error(e);
+        }
     }
   },
   computed: {
