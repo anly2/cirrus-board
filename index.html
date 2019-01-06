@@ -105,9 +105,10 @@
             </div>
           </div>
           <div class="form-group row">
-            <label class="col-xs-2 col-form-label" for="focusedConnection_url">API URL:</label>
+            <label class="col-xs-2 col-form-label" for="focusedConnection_url">Space URL:</label>
             <div class="col-xs-10">
-                <input type="text" v-model="focusedConnection.url" class="form-control" :readOnly="focusedConnection.relogging" id="focusedConnection_url" placeholder="API URL">
+                <input type="text" v-model="focusedConnection.url" class="form-control" :readOnly="focusedConnection.relogging" id="focusedConnection_url"
+                 placeholder="https://api.[your-domain.com]/v2/spaces/db58852b-1c1d-420e-9886-3806815afa14/">
             </div>
           </div>
           <div v-if="!focusedConnection.auth||focusedConnection.relogging">
