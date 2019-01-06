@@ -222,12 +222,6 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
             this.focusedConnection = false
         },
         updateConnections: function() {
-            var conns = this.connections || [];
-            /*TODO: copy more properties */
-            var savedConnections = {};
-            conns.forEach(c => savedConnections[c.url] = {name: c.name, url: c.url});
-            console.log(savedConnections);
-            localStorage.setItem("connections", JSON.stringify(savedConnections));
             this.$emit("update:items", this.connections.slice());
         }
     }
@@ -236,12 +230,7 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
 <script type="text/javascript">
 (function(name) {
     viewSelectors[''] = viewSelectors[name] = function(fullPath, selectorName, qualifier) {
-        var savedConnections;
-        try {
-            savedConnections = JSON.parse(localStorage.getItem(name)) || {};
-        } catch (err) {
-            savedConnections = {};
-        }
+        var savedConnections = Store.connections || {};
         
         var conns = (!qualifier)? Object.values(savedConnections) : qualifier.split(/\s*;\s*/).map(connectionExpression => {
             var p = connectionExpression.extract(/(?:(.*?)=)?(.*)/);
@@ -267,10 +256,6 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
 
             return c;
         });
-
-        savedConnections = {};
-        (conns||[]).forEach(c => savedConnections[c.url] = c);
-        localStorage.setItem(name, JSON.stringify(savedConnections));
 
         var queryString = name + ":" + conns.map(c => c.url).join(";");
         return {
@@ -1298,6 +1283,14 @@ var app = new Vue({
   data: {
     connections: [],
     selectors: []
+  },
+  watch: {
+    'connections': function(conns) {
+        /*TODO: copy more properties */
+        var savedConnections = {};
+        conns.forEach(c => savedConnections[c.url] = {name: c.name, url: c.url});
+        Store.connections = savedConnections;
+    }
   },
   computed: {
     breadcrumbs: function() {
