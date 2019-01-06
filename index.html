@@ -1220,6 +1220,36 @@ class Grouping {
     }
 }
 
+class Store {
+    static save(name, data) {
+        localStorage.setItem(name, (JSON.stringify(data)||undefined));
+    }
+    static load(name) {
+        try {
+            return JSON.parse(localStorage.getItem(name)) || {};
+        } catch (err) {
+            return undefined;
+        }
+    }
+    static persistant(name) {
+        var o = Store.load(name) || {};
+        return new Proxy(o, {
+            set: function(target, property, value, receiver) {
+                console.log("PROXYING", arguments);
+                target[property] = value;
+                Store.save(name, target);
+                return true;
+            },
+            deleteProperty: function(target, property) {
+                console.log("PP", arguments);
+                var r = delete target[property];
+                Store.save(name, target);
+                return r;
+            }
+        });
+    }
+}
+
 MockData = {
     connections: [
         {
