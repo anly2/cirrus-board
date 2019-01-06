@@ -247,7 +247,7 @@ Vue.component('connections', {template: '#connections-template', props:["items"]
                 c = Object.assign(savedConnection, c);
             }
 
-            c.name = p[0] || c.name || c.url.replace(/(?:https?)?(?::\/\/)?([^\/]*).*/, "$1");
+            c.name = p[0] || c.name || c.url.replace(/(?:https?)?(?::\/\/)?([^\/?#]*).*/, "$1");
 
             if (!c.apps) {
                 var d = MockData.connections.filter(mc => mc.name == c.name);
