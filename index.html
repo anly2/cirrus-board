@@ -1221,34 +1221,47 @@ class Grouping {
 }
 
 class Store {
-    static save(name, data) {
-        localStorage.setItem(name, (JSON.stringify(data)||undefined));
+    static set(name, data) {
+        if (data !== undefined) {
+            localStorage.setItem(name, (JSON.stringify(data)||undefined));
+        }
+        else {
+            localStorage.removeItem(name);
+        }
     }
-    static load(name) {
+    static get(name) {
         try {
-            return JSON.parse(localStorage.getItem(name)) || {};
+            return JSON.parse(localStorage.getItem(name));
         } catch (err) {
+            console.warn("Failed to read from local storage. Returning undefined.", err);
             return undefined;
         }
     }
-    static persistant(name) {
-        var o = Store.load(name) || {};
-        return new Proxy(o, {
+    static live(model) {
+        if (!model) model = this;
+        var set = this.set;
+        var get = this.get;
+        return new Proxy(model, {
+            get: function(target, property) {
+                if (!(property in target)) {
+                    target[property] = get(property);
+                }
+                return target[property];
+            },
             set: function(target, property, value, receiver) {
-                console.log("PROXYING", arguments);
                 target[property] = value;
-                Store.save(name, target);
+                set(property, value);
                 return true;
             },
             deleteProperty: function(target, property) {
-                console.log("PP", arguments);
                 var r = delete target[property];
-                Store.save(name, target);
+                set(property, undefined);
                 return r;
             }
         });
     }
 }
+Store = Store.live();
 
 MockData = {
     connections: [
