@@ -61,7 +61,7 @@
     <h3 :class="{'hidden-md hidden-lg':connections.length > 0}">Connections</h3>
     <ul class="list-unstyled">
         <li v-for="connection in connections">
-            <div class="Connection" :class="{focused: connection==focusedConnection}">
+            <div class="Connection" :class="{focused: connection==focusedConnection, inactive: !connection.auth}">
                 <div class="row">
                     <div class="Name col-xs-5">{{connection.name}}</div>
                     <div class="User col-xs-4">
@@ -135,6 +135,9 @@
         /* #1234EF http://materialuicolors.co/?utm_source=launchers */
         background-color: #B0BEC5;
         border-bottom: 1px solid #263238;
+    }
+    .Connection.inactive {
+        background-color: #ccb0b0;
     }
     .Connection.focused {
         border-left: 0.25em solid #455A64;
